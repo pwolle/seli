@@ -71,7 +71,3 @@ make html
 ```
 
 The documentation will be available in `docs/_build/html`.
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
