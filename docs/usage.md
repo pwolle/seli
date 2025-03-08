@@ -47,4 +47,4 @@ Solution: [Solution to issue 1]
 
 [Description of issue 2]
 
-Solution: [Solution to issue 2] 
+Solution: [Solution to issue 2]

@@ -13,4 +13,4 @@ This page provides detailed API documentation for the `seli` package.
 
 ## Additional Modules
 
-[Additional modules will be documented here as the package grows] 
+[Additional modules will be documented here as the package grows]

@@ -1,6 +1,5 @@
 """Tests for the seli.core module."""
 
-import pytest
 from seli.core import example_function
 
 
@@ -15,4 +14,4 @@ def test_example_function_custom():
     """Test example_function with custom argument."""
     result = example_function("Hello, Seli!")
     assert result == "Hello, Seli!"
-    assert isinstance(result, str) 
+    assert isinstance(result, str)

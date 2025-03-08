@@ -38,4 +38,4 @@ import seli
 # Example usage
 result = seli.example_function()
 print(result)  # Output: Hello, World!
-``` 
+```

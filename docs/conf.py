@@ -4,7 +4,8 @@ import os
 import sys
 from datetime import datetime
 
-# Add the project root and src directories to the path so that autodoc can find the modules
+# Add the project root and src directories to the path
+# so that autodoc can find the modules
 sys.path.insert(0, os.path.abspath(".."))
 sys.path.insert(0, os.path.abspath("../src"))
 
@@ -60,4 +61,4 @@ myst_enable_extensions = [
     "colon_fence",
     "deflist",
 ]
-myst_heading_anchors = 3 
+myst_heading_anchors = 3

@@ -1,1 +1,1 @@
-"""Test package for seli.""" 
+"""Test package for seli."""

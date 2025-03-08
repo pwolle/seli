@@ -28,6 +28,8 @@ dev = [
     "black>=23.0.0",
     "isort>=5.12.0",
     "mypy>=1.0.0",
+    "ruff>=0.9.0",
+    "pre-commit>=4.0.0",
 ]
 docs = [
     "sphinx>=6.0.0",
@@ -52,4 +54,48 @@ target-version = ["py38"]
 
 [tool.isort]
 profile = "black"
-src_paths = ["src", "tests"] 
+src_paths = ["src", "tests"]
+
+[tool.ruff]
+# Same as Black.
+line-length = 88
+indent-width = 4
+
+# Assume Python 3.8+
+target-version = "py38"
+
+[tool.ruff.lint]
+# Enable flake8-bugbear (`B`) rules.
+select = ["E", "F", "B", "I"]
+ignore = []
+
+# Allow fix for all enabled rules.
+fixable = ["ALL"]
+
+# Allow autofix for all enabled rules.
+unfixable = []
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+]

@@ -19,4 +19,4 @@ def example_function(value: str = "Hello, World!") -> str:
         >>> example_function("Hello, Seli!")
         'Hello, Seli!'
     """
-    return value 
+    return value
