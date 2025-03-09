@@ -1,6 +1,15 @@
 import pytest
 
-from src.seli._module import AttrKey, ItemKey, Module, PathKey, dfs_map, keys_lt
+from src.seli._module import (
+    AttrKey,
+    ItemKey,
+    Module,
+    PathKey,
+    dfs_map,
+    keys_lt,
+    to_tree,
+    to_tree_inverse,
+)
 
 
 def test_dfs_map_simple_dict():
@@ -717,3 +726,255 @@ def test_keys_lt_equal_keys():
 
     result = keys_lt(attr_key1, attr_key2)
     assert result is False
+
+
+def test_to_tree_simple_dict():
+    """Test to_tree with a simple dictionary."""
+    data = {"a": 1, "b": 2, "c": 3}
+    result = to_tree(data)
+    # For simple structure without shared references or cycles,
+    # the result should be structurally equivalent to the input
+    assert result == data
+
+
+def test_to_tree_shared_reference():
+    """Test to_tree with a structure containing shared references."""
+    shared_dict = {"name": "shared"}
+    data = {
+        "a": shared_dict,
+        "b": shared_dict,  # Same object referenced twice
+    }
+
+    # Before transformation, changing the shared object affects both references
+    shared_dict["name"] = "modified"
+    assert data["a"]["name"] == "modified"
+    assert data["b"]["name"] == "modified"
+
+    result = to_tree(data)
+
+    # The result should be a PathKey reference instead of a circular reference
+    result["a"]["name"] = "changed again"
+    assert result["a"]["name"] == "changed again"
+    assert result["b"] == PathKey([ItemKey("a")])
+
+
+def test_to_tree_with_nested_shared_reference():
+    shared_dict = {"value": 42}
+    nested = {
+        "x": shared_dict,
+        "y": shared_dict,
+    }
+    data = {
+        "outer": {
+            "inner1": nested,
+            "inner2": nested,  # Same nested dict referenced multiple times
+        }
+    }
+
+    # Before transformation, changing the shared object affects all references
+    shared_dict["value"] = 100
+    assert data["outer"]["inner1"]["x"]["value"] == 100
+    assert data["outer"]["inner1"]["y"]["value"] == 100
+    assert data["outer"]["inner2"]["x"]["value"] == 100
+    assert data["outer"]["inner2"]["y"]["value"] == 100
+
+    result = to_tree(data)
+
+    # After transformation, the shared references should be replaced with PathKeys
+    assert result["outer"]["inner1"]["x"]["value"] == 100
+    assert isinstance(result["outer"]["inner1"]["y"], PathKey)
+    assert isinstance(result["outer"]["inner2"], PathKey)
+
+    # Check that path keys point to the correct location
+    assert result["outer"]["inner1"]["y"] == PathKey(
+        [ItemKey("outer"), ItemKey("inner1"), ItemKey("x")]
+    )
+    assert result["outer"]["inner2"] == PathKey([ItemKey("outer"), ItemKey("inner1")])
+
+
+def test_to_tree_with_cyclic_reference():
+    # Create a structure with a cycle
+    cycle_dict = {"name": "cycle"}
+    cycle_dict["self_ref"] = cycle_dict  # Self-reference creates a cycle
+
+    # Before transformation, we have an actual cycle
+    assert cycle_dict["self_ref"] is cycle_dict
+
+    result = to_tree(cycle_dict)
+
+    # After transformation, the cycle should be replaced with a PathKey
+    assert result["name"] == "cycle"
+    assert isinstance(result["self_ref"], PathKey)
+    assert result["self_ref"] == PathKey([])  # Root path
+
+    # Changing a value in the result should not cause infinite recursion
+    result["name"] = "transformed"
+    assert result["name"] == "transformed"
+
+
+def test_to_tree_with_complex_structure():
+    # Create a structure with multiple shared and cyclic references
+    shared_list = [1, 2, 3]
+    a = {"name": "a", "list": shared_list}
+    b = {"name": "b", "list": shared_list, "ref_to_a": a}
+    a["ref_to_b"] = b  # Create a cycle between a and b
+
+    data = {"a": a, "b": b, "shared_list": shared_list}
+
+    result = to_tree(data)
+
+    # Check that the basic values are preserved
+    assert result["a"]["name"] == "a"
+    # b is likely replaced by a PathKey in this scenario
+    assert isinstance(result["b"], PathKey)
+    assert result["a"]["list"] == [1, 2, 3]
+
+    # Check that shared list is properly represented
+    assert isinstance(result["shared_list"], PathKey)
+
+
+def test_to_tree_inverse_simple_dict():
+    """Test to_tree_inverse with a simple dictionary."""
+    data = {"a": 1, "b": 2, "c": 3}
+    # For simple structures, to_tree should not change anything
+    tree = to_tree(data)
+    assert tree == data
+
+    # And to_tree_inverse should return the same structure
+    result = to_tree_inverse(tree)
+    assert result == data
+
+
+def test_to_tree_inverse_shared_reference():
+    """Test to_tree_inverse with a structure containing shared references."""
+    # Create a structure with shared references
+    shared_dict = {"name": "shared"}
+    data = {
+        "a": shared_dict,
+        "b": shared_dict,  # Same object referenced twice
+    }
+
+    # Transform using to_tree
+    tree = to_tree(data)
+
+    # Verify that to_tree has replaced the shared reference with a PathKey
+    assert isinstance(tree["b"], PathKey)
+    assert tree["b"] == PathKey([ItemKey("a")])
+
+    # Now inverse the transformation
+    result = to_tree_inverse(tree)
+
+    # Verify the structure is correct
+    assert result["a"]["name"] == "shared"
+    assert result["b"]["name"] == "shared"
+
+    # Verify that shared references are restored by modifying one reference
+    # and checking that the other is also modified
+    result["a"]["name"] = "modified"
+    assert result["b"]["name"] == "modified"
+
+
+def test_to_tree_inverse_nested_shared_reference():
+    # Create a structure with nested shared references
+    shared_dict = {"value": 42}
+    nested = {
+        "x": shared_dict,
+        "y": shared_dict,
+    }
+    data = {
+        "outer": {
+            "inner1": nested,
+            "inner2": nested,  # Same nested dict referenced multiple times
+        }
+    }
+
+    # Transform using to_tree
+    tree = to_tree(data)
+
+    # Now inverse the transformation
+    result = to_tree_inverse(tree)
+
+    # Verify that the structure is correct
+    assert result["outer"]["inner1"]["x"]["value"] == 42
+    assert result["outer"]["inner1"]["y"]["value"] == 42
+    assert result["outer"]["inner2"]["x"]["value"] == 42
+    assert result["outer"]["inner2"]["y"]["value"] == 42
+
+    # Verify shared references are restored by modifying and checking
+    result["outer"]["inner1"]["x"]["value"] = 100
+    assert result["outer"]["inner1"]["y"]["value"] == 100
+    assert result["outer"]["inner2"]["x"]["value"] == 100
+    assert result["outer"]["inner2"]["y"]["value"] == 100
+
+
+def test_to_tree_inverse_cyclic_reference():
+    # Create a structure with a cycle
+    cycle_dict = {"name": "cycle"}
+    cycle_dict["self_ref"] = cycle_dict  # Self-reference creates a cycle
+
+    # Transform using to_tree
+    tree = to_tree(cycle_dict)
+
+    # Verify that to_tree has replaced the cycle with a PathKey
+    assert isinstance(tree["self_ref"], PathKey)
+
+    # Now inverse the transformation
+    result = to_tree_inverse(tree)
+
+    # Verify the structure is correct
+    assert result["name"] == "cycle"
+    assert "self_ref" in result
+
+    # Modifying through the cycle
+    result["name"] = "modified"
+    assert result["self_ref"]["name"] == "modified"
+
+
+def test_to_tree_inverse_complex_structure():
+    # Create a structure with multiple shared and cyclic references
+    shared_list = [1, 2, 3]
+    a = {"name": "a", "list": shared_list}
+    b = {"name": "b", "list": shared_list, "ref_to_a": a}
+    a["ref_to_b"] = b  # Create a cycle between a and b
+
+    data = {"a": a, "b": b, "shared_list": shared_list}
+
+    # Transform using to_tree
+    tree = to_tree(data)
+
+    # Now inverse the transformation
+    result = to_tree_inverse(tree)
+
+    # Verify that basic structure is preserved
+    assert result["a"]["name"] == "a"
+    assert result["b"]["name"] == "b"
+
+    # Verify that shared references work correctly
+    result["shared_list"][0] = 99
+    assert result["a"]["list"][0] == 99
+    assert result["b"]["list"][0] == 99
+
+    # Verify that cyclic references work correctly
+    result["a"]["name"] = "modified a"
+    assert result["b"]["ref_to_a"]["name"] == "modified a"
+
+
+def test_to_tree_inverse_basic():
+    """Test basic behavior of to_tree_inverse to understand how it works."""
+    # Create a simple structure
+    data = {"x": 1, "y": 2}
+
+    # Convert to tree
+    tree = to_tree(data)
+
+    # Print the tree structure for debugging
+    print("\nTree structure:", tree)
+
+    # Use to_tree_inverse
+    result = to_tree_inverse(tree)
+
+    # Print the result for debugging
+    print("Result structure:", result)
+
+    # Basic assertions to see what's happening
+    assert isinstance(result, dict)

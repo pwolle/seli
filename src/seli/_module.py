@@ -5,7 +5,12 @@ import jax
 
 
 class Module:
-    pass
+    def __hash__(self):
+        flat = flat_path_dict(self)
+        return hash(tuple(sorted(flat.items())))
+
+    def __eq__(self, other):
+        return flat_path_dict(self) == flat_path_dict(other)
 
 
 LeafType: TypeAlias = None | bool | int | float | str | jax.Array
@@ -15,6 +20,11 @@ NodeType: TypeAlias = LeafType | DeepType
 
 @dataclass(frozen=True)
 class ItemKey(Module):
+    """
+    Key for accessing items using the [] operator.
+    Used to access dictionary items by key or sequence items by index.
+    """
+
     key: str | int
 
     def get(self, obj):
@@ -31,8 +41,13 @@ class ItemKey(Module):
         return keys_lt(self, other)
 
 
-@dataclass
+@dataclass(frozen=True)
 class AttrKey(Module):
+    """
+    Key for accessing object attributes using the dot operator.
+    Used to access attributes of an object using the dot notation (obj.attr).
+    """
+
     key: str
 
     def get(self, obj):
@@ -59,8 +74,14 @@ def keys_lt(a: ItemKey | AttrKey, b: ItemKey | AttrKey) -> bool:
     return a.key < b.key
 
 
-@dataclass
+@dataclass(frozen=True)
 class PathKey(Module):
+    """
+    Sequence of keys that enables access to nested data structures.
+    Combines multiple ItemKey and AttrKey objects to navigate through nested
+    objects, dictionaries, and sequences.
+    """
+
     path: list[ItemKey | AttrKey]
 
     def __add__(self, item: ItemKey) -> "PathKey":
@@ -93,10 +114,13 @@ class PathKey(Module):
     def __lt__(self, other):
         return tuple(self.path) < tuple(other.path)
 
+    def __hash__(self):
+        return hash((type(self), tuple(self.path)))
+
 
 def dfs_map(
     obj: NodeType,
-    fun: Callable[[PathKey, NodeType], NodeType],
+    fun: Callable[[PathKey, NodeType], NodeType] = lambda _, x: x,
     *,
     refs: dict[int, NodeType] | None = None,
     path: PathKey | None = None,
@@ -184,7 +208,7 @@ def dfs_map(
     obj_fun = fun(path, obj)
     refs[id(obj)] = obj_fun
 
-    if isinstance(obj_fun, LeafType):
+    if isinstance(obj_fun, (LeafType, PathKey)):
         return obj_fun
 
     if isinstance(obj_fun, dict):
@@ -228,7 +252,7 @@ def dfs_map(
         if hasattr(obj_fun, "__slots__"):
             keys.extend(obj_fun.__slots__)
 
-        obj_new = object.__new__(Module)
+        obj_new = object.__new__(type(obj_fun))
 
         for key in sorted(keys):
             value = getattr(obj_fun, key)
@@ -247,3 +271,113 @@ def dfs_map(
         return obj_new
 
     raise ValueError(f"Unknown object type: {type(obj)}")
+
+
+def to_tree(obj: NodeType):
+    """
+    Convert shared/cyclic references into a PathKeys, the result is a tree.
+
+    This function transforms complex nested data structures that may contain
+    shared references (the same object referenced multiple times) or cyclic
+    references (loops in the reference graph) into a tree structure. Instead
+    of maintaining the actual shared or cyclic references, it replaces them
+    with path references.
+
+    Parameters
+    ---
+    obj : NodeType
+        The input object to convert to a tree. Can be any supported type:
+        dictionaries, lists, Module objects, or leaf values (None, bool,
+        int, float, str, or jax.Array).
+
+    Returns
+    ---
+    NodeType
+        A tree-structured version of the input, with all shared and
+        cyclic references replaced by path references.
+
+    Notes
+    ---
+    - This function is useful for serializing complex object graphs or
+      visualizing structures with cycles.
+    - Path references can be used to reconstruct the original structure
+      if needed.
+    - The function uses dfs_map internally to traverse the structure.
+    """
+    id_to_path = {}
+
+    def fun(path: PathKey, obj: NodeType):
+        id_to_path[id(obj)] = path
+        return obj
+
+    def refs_fun(_: PathKey, obj: NodeType):
+        return id_to_path[id(obj)]
+
+    return dfs_map(obj, fun, refs_fun=refs_fun)
+
+
+def to_tree_inverse(obj: NodeType):
+    """
+    Reconstructs the original object structure from a tree produced by to_tree.
+
+    This function is the inverse operation of to_tree. It takes a tree structure
+    where shared or cyclic references have been replaced with PathKey objects,
+    and reconstructs the original structure by resolving those path references
+    back into actual object references.
+
+    Parameters
+    ---
+    obj : NodeType
+        A tree structure, typically produced by to_tree, where shared or cyclic
+        references have been replaced with PathKey objects pointing to their
+        location in the tree.
+
+    Returns
+    ---
+    NodeType
+        The reconstructed object structure with all path references resolved
+        back into actual object references, restoring the original shared
+        references and cycles.
+
+    Notes
+    ---
+    - This function reverses the transformation performed by to_tree
+    - When a PathKey is encountered during traversal, it gets resolved by
+      accessing the object at that path in the tree
+    - The function uses dfs_map internally for traversal, similar to to_tree
+    - While to_tree eliminates cycles by replacing them with path references,
+      this function reintroduces those cycles
+    """
+
+    refs: dict[PathKey, PathKey] = {}
+
+    def fun(path: PathKey, obj: NodeType):
+        if isinstance(obj, PathKey):
+            refs[path] = obj
+
+        return obj
+
+    obj = dfs_map(obj, fun, refs_fun=fun)
+
+    for path, ref in refs.items():
+        path.set(obj, ref.get(obj))
+
+    return obj
+
+
+def flat_path_dict(obj: NodeType):
+    tree = to_tree(obj)
+    nodes = {}
+
+    def add_node(path, node: NodeType):
+        if isinstance(node, (LeafType, PathKey)):
+            nodes[path] = node
+            return node
+
+        nodes[path + AttrKey("__class__")] = type(node).__name__
+        return node
+
+    dfs_map(tree, add_node)
+
+    # sort dict by keys for deterministic output
+    return dict(sorted(nodes.items(), key=lambda x: x[0]))
