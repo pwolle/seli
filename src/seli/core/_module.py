@@ -11,6 +11,7 @@ import jax
 
 from seli.core._registry import REGISTRY_INVERSE, ModuleBase
 from seli.core._typecheck import typecheck
+from seli.core._utils import array_summary
 
 __all__ = [
     "Module",
@@ -69,13 +70,8 @@ class Module(ModuleBase, name="builtin.Module"):
 
         return obj
 
-    def __repr__(self):
-        head = f"{self.__class__.__name__}(\n"
-        for key, value in self.__dict__.items():
-            head += f"  {key}: {str(value).replace('\n', '\n  ')}\n"
-
-        head += ")"
-        return head
+    def __repr__(self) -> str:
+        return node_repr(self)
 
 
 LeafType: TypeAlias = None | bool | int | float | str | type | jax.Array
@@ -538,3 +534,59 @@ def flat_path_dict(obj: NodeType):
 
     # sort dict by keys for deterministic output
     return dict(sorted(nodes.items(), key=lambda x: x[0]))
+
+
+def node_repr(obj: NodeType, /, indent: str = " " * 4) -> str:
+    obj = to_tree(obj)
+
+    if isinstance(obj, jax.Array):
+        return array_summary(obj)
+
+    if isinstance(obj, PathKey):
+        return f"<obj{obj!r}>"
+
+    if isinstance(obj, list):
+        head = "[\n"
+        body = ""
+
+        for item in obj:
+            item_repr = node_repr(item, indent=indent)
+            item_repr = item_repr.replace("\n", "\n" + indent)
+            body += f"{indent}{item_repr},\n"
+
+        tail = "]"
+        return head + body + tail
+
+    if isinstance(obj, dict):
+        head = "{\n"
+        body = ""
+
+        for key, value in sorted(obj.items(), key=lambda x: x[0]):
+            value_repr = node_repr(value, indent=indent)
+            value_repr = value_repr.replace("\n", "\n" + indent)
+            body += f"{indent}{key!r}: {value_repr},\n"
+
+        tail = "}"
+        return head + body + tail
+
+    if isinstance(obj, Module):
+        head = f"{obj.__class__.__name__}(\n"
+        body = ""
+
+        keys = []
+        if hasattr(obj, "__dict__"):
+            keys.extend(obj.__dict__.keys())
+
+        if hasattr(obj, "__slots__"):
+            keys.extend(obj.__slots__)
+
+        for key in sorted(keys):
+            value = getattr(obj, key)
+            value_repr = node_repr(value, indent=indent)
+            value_repr = value_repr.replace("\n", "\n" + indent)
+            body += f"{indent}{key}={value_repr},\n"
+
+        tail = ")"
+        return head + body + tail
+
+    return repr(obj)
