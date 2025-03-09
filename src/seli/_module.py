@@ -13,7 +13,7 @@ DeepType: TypeAlias = list | dict | Module
 NodeType: TypeAlias = LeafType | DeepType
 
 
-@dataclass
+@dataclass(frozen=True)
 class ItemKey(Module):
     key: str | int
 
@@ -26,24 +26,42 @@ class ItemKey(Module):
     def __repr__(self):
         return f"[{self.key}]"
 
+    # add sorting to allow deterministic traversal
+    def __lt__(self, other):
+        return keys_lt(self, other)
+
 
 @dataclass
 class AttrKey(Module):
-    attr: str
+    key: str
 
     def get(self, obj):
-        return getattr(obj, self.attr)
+        return getattr(obj, self.key)
 
     def set(self, obj, value):
-        setattr(obj, self.attr, value)
+        setattr(obj, self.key, value)
 
     def __repr__(self):
-        return f".{self.attr}"
+        return f".{self.key}"
+
+    # add sorting to allow deterministic traversal
+    def __lt__(self, other):
+        return keys_lt(self, other)
+
+
+def keys_lt(a: ItemKey | AttrKey, b: ItemKey | AttrKey) -> bool:
+    if type(a) is not type(b):
+        return isinstance(a, ItemKey)
+
+    if type(a.key) is not type(b.key):
+        return isinstance(a.key, int)
+
+    return a.key < b.key
 
 
 @dataclass
 class PathKey(Module):
-    path: list[ItemKey]
+    path: list[ItemKey | AttrKey]
 
     def __add__(self, item: ItemKey) -> "PathKey":
         return PathKey(self.path + [item])
@@ -71,6 +89,10 @@ class PathKey(Module):
     def __repr__(self):
         return "".join(str(item) for item in self.path)
 
+    # add sorting to allow deterministic traversal
+    def __lt__(self, other):
+        return tuple(self.path) < tuple(other.path)
+
 
 def dfs_map(
     obj: NodeType,
@@ -86,64 +108,69 @@ def dfs_map(
 
     This function traverses dictionaries, lists, and Module objects recursively
     in a depth-first manner, applying the provided transformation function to
-    each element. It builds a new structure with the same shape as the original,
-    but with transformed values. During traversal, it tracks the path to each
-    element and handles circular references to prevent infinite recursion.
+    each element. It builds a new structure with the same shape as the
+    original, but with transformed values. During traversal, it tracks the path
+    to each element and handles circular references to prevent infinite
+    recursion.
 
-    Args:
-        obj: The object to traverse, which can be a dictionary, list, Module,
-            or a leaf value.
-            - Dictionaries must have string keys.
-            - Lists are traversed in order.
-            - Module objects have their attributes traversed alphabetically.
-            - All other types are treated as leaf values.
+    Parameters
+    ---
+    obj: The object to traverse, which can be a dictionary, list, Module,
+        or a leaf value.
+        - Dictionaries must have string keys.
+        - Lists are traversed in order.
+        - Module objects have their attributes traversed alphabetically.
+        - All other types are treated as leaf values.
 
-        fun: A transformation function to apply to each element in the structure.
-            The function should accept two arguments:
-                - path: A PathKey object representing the current path
-                - x: The current element being processed
-            And return a transformed version of the element.
+    fun: A transformation function to apply to each element in the structure.
+        The function should accept two arguments:
+            - path: A PathKey object representing the current path
+            - x: The current element being processed
+        And return a transformed version of the element.
 
-        refs: Optional. A dictionary mapping object IDs to their transformed
-            versions. Used internally to track already-processed objects and
-            handle circular references. Default is None (an empty dict will be
-            created).
+    refs: Optional. A dictionary mapping object IDs to their transformed
+        versions. Used internally to track already-processed objects and
+        handle circular references. Default is None (an empty dict will be
+        created).
 
-        path: Optional. A PathKey object representing the current path in the
-            structure. Used for tracking position during recursive calls.
-            Default is None (an empty PathKey will be created).
+    path: Optional. A PathKey object representing the current path in the
+        structure. Used for tracking position during recursive calls.
+        Default is None (an empty PathKey will be created).
 
-        refs_fun: Optional. A function to handle repeated references.
-            When an object is encountered multiple times during traversal:
-                - If refs_fun is None, the already-processed version is
-                  returned directly.
-                - If refs_fun is provided, it's called with (path, processed_obj)
-                  to determine what to return for the repeated reference.
-            Default is None.
+    refs_fun: Optional. A function to handle repeated references.
+        When an object is encountered multiple times during traversal:
+            - If refs_fun is None, the already-processed version is
+                returned directly.
+            - If refs_fun is provided, it's called with (path, processed_obj)
+                to determine what to return for the repeated reference.
+        Default is None.
 
-    Returns:
-        A new structure with the same shape as the input, but with all elements
-        transformed according to the provided function.
+    Returns
+    ---
+    A new structure with the same shape as the input, but with all elements
+    transformed according to the provided function.
 
-    Raises:
-        ValueError: If an object of an unsupported type is encountered.
-            Supported types are: dictionaries, lists, Module objects, and leaf
+    Raises
+    ---
+    ValueError: If an object of an unsupported type is encountered.
+        Supported types are: dictionaries, lists, Module objects, and leaf
             values.
         TypeError: If a dictionary with non-string keys is encountered.
 
-    Notes:
-        - The function preserves the structure of the original object while
-          creating a new transformed copy.
-        - Dictionary keys and Module attributes are processed in sorted order for
-          deterministic traversal.
-        - For circular references, the function uses the refs_fun parameter to
-          determine how to handle them.
-        - Module objects are created using object.__new__ without calling
-          __init__, which may bypass important initialization logic.
-        - The path parameter tracks the exact location of each element in the
-          nested structure using:
-            - ItemKey for dictionary keys and list indices
-            - AttrKey for Module attributes
+    Notes
+    ---
+    - The function preserves the structure of the original object while
+      creating a new transformed copy.
+    - Dictionary keys and Module attributes are processed in sorted order for
+      deterministic traversal.
+    - For circular references, the function uses the refs_fun parameter to
+      determine how to handle them.
+    - Module objects are created using object.__new__ without calling
+      __init__, which may bypass important initialization logic.
+    - The path parameter tracks the exact location of each element in the
+      nested structure using:
+        - ItemKey for dictionary keys and list indices
+        - AttrKey for Module attributes
     """
     path = path or PathKey([])
     refs = refs or {}

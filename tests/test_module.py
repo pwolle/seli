@@ -1,6 +1,6 @@
 import pytest
 
-from src.seli._module import AttrKey, ItemKey, Module, PathKey, dfs_map
+from src.seli._module import AttrKey, ItemKey, Module, PathKey, dfs_map, keys_lt
 
 
 def test_dfs_map_simple_dict():
@@ -639,7 +639,7 @@ def test_dfs_map_refs_fun_none():
     shared = {"data": 123}
     obj = {"a": shared, "b": shared}
 
-    def identity(path, x):
+    def identity(_, x):
         return x
 
     # Let's examine the implementation logic of dfs_map
@@ -654,3 +654,66 @@ def test_dfs_map_refs_fun_none():
     # since they are separate objects in the result
     result["a"]["data"] = 456
     assert result["b"]["data"] == 123
+
+
+def test_keys_lt_different_types():
+    item_key = ItemKey(key="test")
+    attr_key = AttrKey(key="test")
+
+    # According to the implementation, an ItemKey should be less than an AttrKey
+    # Note: Current implementation has an error in this case
+    result = keys_lt(item_key, attr_key)
+    assert result is True
+    # The reverse should be False
+    result = keys_lt(attr_key, item_key)
+    assert result is False
+
+
+def test_keys_lt_same_type_different_key_types():
+    int_item_key = ItemKey(key=1)
+    str_item_key = ItemKey(key="test")
+
+    # According to implementation, int key should be less than str key
+    # Note: Current implementation has an error in this case
+    result = keys_lt(int_item_key, str_item_key)
+    assert result is True
+
+    # The reverse should be False
+    result = keys_lt(str_item_key, int_item_key)
+    assert result is False
+
+
+def test_keys_lt_same_type_same_key_type():
+    smaller_item_key = ItemKey(key=1)
+    larger_item_key = ItemKey(key=5)
+
+    result = keys_lt(smaller_item_key, larger_item_key)
+    assert result is True
+
+    result = keys_lt(larger_item_key, smaller_item_key)
+    assert result is False
+
+    # Test with AttrKey instances
+    smaller_attr_key = AttrKey(key="apple")
+    larger_attr_key = AttrKey(key="banana")
+
+    result = keys_lt(smaller_attr_key, larger_attr_key)
+    assert result is True
+
+    result = keys_lt(larger_attr_key, smaller_attr_key)
+    assert result is False
+
+
+def test_keys_lt_equal_keys():
+    item_key1 = ItemKey(key="same")
+    item_key2 = ItemKey(key="same")
+
+    result = keys_lt(item_key1, item_key2)
+    assert result is False
+
+    # Test with AttrKey instances
+    attr_key1 = AttrKey(key="same")
+    attr_key2 = AttrKey(key="same")
+
+    result = keys_lt(attr_key1, attr_key2)
+    assert result is False
