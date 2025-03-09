@@ -9,7 +9,8 @@ class Module:
 
 
 LeafType: TypeAlias = None | bool | int | float | str | jax.Array
-NodeType: TypeAlias = list | dict | Module
+DeepType: TypeAlias = list | dict | Module
+NodeType: TypeAlias = LeafType | DeepType
 
 
 @dataclass
@@ -72,19 +73,24 @@ class PathKey:
 
 
 def dfs_map(
-    obj: NodeType | LeafType,
-    fun: Callable[[NodeType | LeafType], NodeType | LeafType],
+    obj: NodeType,
+    fun: Callable[[PathKey, NodeType], NodeType],
+    *,
+    refs: dict[int, NodeType] | None = None,
     path: PathKey | None = None,
-    ids: dict[int, NodeType | LeafType] | None = None,
-) -> NodeType | LeafType:
+    refs_fun: Callable[[PathKey, NodeType], NodeType] | None = None,
+) -> DeepType | LeafType:
     path = path or PathKey([])
-    ids = ids or {}
+    refs = refs or {}
 
-    if id(obj) in ids:
-        return ids[id(obj)]
+    if id(obj) in refs:
+        if refs_fun is None:
+            return refs[id(obj)]
 
-    obj_fun = fun(obj)
-    ids[id(obj)] = obj_fun
+        return refs_fun(path, refs[id(obj)])
+
+    obj_fun = fun(path, obj)
+    refs[id(obj)] = obj_fun
 
     if isinstance(obj_fun, LeafType):
         return obj_fun
@@ -95,7 +101,13 @@ def dfs_map(
         obj_new = {}
 
         for key, value in sorted(obj.items(), key=lambda x: x[0]):
-            obj_new[key] = dfs_map(value, fun, path + ItemKey(key), ids)
+            obj_new[key] = dfs_map(
+                value,
+                fun,
+                path=path + ItemKey(key),
+                refs=refs,
+                refs_fun=refs_fun,
+            )
 
         return obj_new
 
@@ -103,8 +115,15 @@ def dfs_map(
         obj_new = []
 
         for i, value in enumerate(obj_fun):
-            obj_new.append(dfs_map(value, fun, path + ItemKey(i), ids))
-
+            obj_new.append(
+                dfs_map(
+                    value,
+                    fun,
+                    path=path + ItemKey(i),
+                    refs=refs,
+                    refs_fun=refs_fun,
+                ),
+            )
         return obj_new
 
     if isinstance(obj_fun, Module):
@@ -119,7 +138,17 @@ def dfs_map(
 
         for key in sorted(keys):
             value = getattr(obj_fun, key)
-            setattr(obj_new, key, dfs_map(value, fun, path + AttrKey(key), ids))
+            setattr(
+                obj_new,
+                key,
+                dfs_map(
+                    value,
+                    fun,
+                    path=path + AttrKey(key),
+                    refs=refs,
+                    refs_fun=refs_fun,
+                ),
+            )
 
         return obj_new
 

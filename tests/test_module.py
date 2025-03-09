@@ -4,11 +4,10 @@ from src.seli._module import AttrKey, ItemKey, Module, PathKey, dfs_map
 
 
 def test_dfs_map_simple_dict():
-    """Test dfs_map on a simple dictionary."""
     data = {"a": 1, "b": 2, "c": 3}
 
     # Simple function that doubles values
-    def double(x):
+    def double(_, x):
         if isinstance(x, int):
             return x * 2
         return x
@@ -18,11 +17,10 @@ def test_dfs_map_simple_dict():
 
 
 def test_dfs_map_nested_dict():
-    """Test dfs_map on a nested dictionary."""
     data = {"a": 1, "b": {"c": 2, "d": 3}, "e": 4}
 
     # Simple function that doubles values
-    def double(x):
+    def double(_, x):
         if isinstance(x, int):
             return x * 2
         return x
@@ -32,11 +30,10 @@ def test_dfs_map_nested_dict():
 
 
 def test_dfs_map_list():
-    """Test dfs_map on a list."""
     data = [1, 2, 3, 4]
 
     # Simple function that doubles values
-    def double(x):
+    def double(_, x):
         if isinstance(x, int):
             return x * 2
         return x
@@ -46,11 +43,10 @@ def test_dfs_map_list():
 
 
 def test_dfs_map_nested_list():
-    """Test dfs_map on a nested list."""
     data = [1, [2, 3], 4]
 
     # Simple function that doubles values
-    def double(x):
+    def double(_, x):
         if isinstance(x, int):
             return x * 2
         return x
@@ -60,11 +56,10 @@ def test_dfs_map_nested_list():
 
 
 def test_dfs_map_mixed_structure():
-    """Test dfs_map on a mixed structure with dicts and lists."""
     data = {"a": 1, "b": [2, 3, {"c": 4}], "d": 5}
 
     # Simple function that doubles values
-    def double(x):
+    def double(_, x):
         if isinstance(x, int):
             return x * 2
         return x
@@ -74,8 +69,6 @@ def test_dfs_map_mixed_structure():
 
 
 def test_dfs_map_with_module():
-    """Test dfs_map with a Module object."""
-
     class TestModule(Module):
         def __init__(self):
             self.value = 1
@@ -83,7 +76,7 @@ def test_dfs_map_with_module():
     module = TestModule()
 
     # A function that preserves the module but accesses its attributes
-    def process_module(x):
+    def process_module(_, x):
         return x
 
     result = dfs_map(module, process_module)
@@ -96,13 +89,12 @@ def test_dfs_map_with_module():
 
 
 def test_dfs_map_circular_reference():
-    """Test dfs_map with circular references."""
     # Create a circular reference
     data = {"a": 1}
     data["self"] = data
 
     # Function that processes the structure without modifying it
-    def identity(x):
+    def identity(_, x):
         return x
 
     result = dfs_map(data, identity)
@@ -121,13 +113,12 @@ def test_dfs_map_circular_reference():
 
 
 def test_dfs_map_with_path_tracking():
-    """Test that dfs_map correctly tracks paths during traversal."""
     data = {"a": 1, "b": {"c": 2}}
 
     paths_visited = []
 
     # Create a custom function that captures the path parameter
-    def track_path(x):
+    def track_path(_, x):
         nonlocal paths_visited
         # In each call to dfs_map, 'path' will be in the caller's scope
         # We can't directly access it, so we'll record what we're processing
@@ -146,7 +137,6 @@ def test_dfs_map_with_path_tracking():
 
 
 def test_dfs_map_transformation():
-    """Test dfs_map with a transformation that changes types."""
     data = {
         "a": "1",  # string
         "b": "2",  # string
@@ -156,7 +146,7 @@ def test_dfs_map_transformation():
     }
 
     # Convert strings to integers
-    def convert(x):
+    def convert(_, x):
         if isinstance(x, str) and x.isdigit():
             return int(x)
         return x
@@ -172,7 +162,6 @@ def test_dfs_map_transformation():
 
 
 def test_dfs_map_with_jax_array():
-    """Test dfs_map with jax.Array type which is a LeafType."""
     pytest.importorskip("jax")  # Skip if jax is not installed
     import jax
     import numpy as np
@@ -182,7 +171,7 @@ def test_dfs_map_with_jax_array():
     data = {"array": array}
 
     # Identity function
-    def identity(x):
+    def identity(_, x):
         return x
 
     result = dfs_map(data, identity)
@@ -194,7 +183,6 @@ def test_dfs_map_with_jax_array():
 
 
 def test_dfs_map_complex_nested_structure():
-    """Test dfs_map with a complex nested structure with various types."""
     data = {
         "ints": [1, 2, 3],
         "strings": ["a", "b", "c"],
@@ -205,7 +193,7 @@ def test_dfs_map_complex_nested_structure():
     }
 
     # Function that doesn't modify values
-    def identity(x):
+    def identity(_, x):
         return x
 
     result = dfs_map(data, identity)
@@ -222,8 +210,6 @@ def test_dfs_map_complex_nested_structure():
 
 
 def test_dfs_map_with_custom_module_attributes():
-    """Test dfs_map with a Module that has custom attributes."""
-
     class CustomModule(Module):
         __slots__ = ["slot_attr"]
 
@@ -235,7 +221,7 @@ def test_dfs_map_with_custom_module_attributes():
     module = CustomModule()
 
     # Double all integer values
-    def double_ints(x):
+    def double_ints(_, x):
         if isinstance(x, int):
             return x * 2
         return x
@@ -249,8 +235,6 @@ def test_dfs_map_with_custom_module_attributes():
 
 
 def test_dfs_map_with_nested_modules():
-    """Test dfs_map with nested Module objects."""
-
     class ChildModule(Module):
         def __init__(self):
             self.value = 1
@@ -263,7 +247,7 @@ def test_dfs_map_with_nested_modules():
     module = ParentModule()
 
     # Double all integer values
-    def double_ints(x):
+    def double_ints(_, x):
         if isinstance(x, int):
             return x * 2
         return x
@@ -279,7 +263,6 @@ def test_dfs_map_with_nested_modules():
 
 
 def test_item_key_methods():
-    """Test ItemKey get, set, and repr methods."""
     # Test with string key
     item_key = ItemKey("test")
     obj = {"test": 42}
@@ -310,8 +293,6 @@ def test_item_key_methods():
 
 
 def test_attr_key_methods():
-    """Test AttrKey get, set, and repr methods."""
-
     class TestObj:
         def __init__(self):
             self.test_attr = "value"
@@ -331,7 +312,6 @@ def test_attr_key_methods():
 
 
 def test_path_key_methods():
-    """Test PathKey get, set, and repr methods."""
     # Create a nested object
     nested_obj = {"level1": {"level2": 42}}
 
@@ -373,7 +353,6 @@ def test_path_key_methods():
 
 
 def test_path_key_repr():
-    """Test the __repr__ method of PathKey."""
     # Create path keys
     key1 = ItemKey("level1")
     key2 = ItemKey("level2")
@@ -395,8 +374,6 @@ def test_path_key_repr():
 
 
 def test_dfs_map_unknown_type():
-    """Test dfs_map with an unknown type that raises a ValueError."""
-
     # Create a custom class that is not a Module and not a leaf type
     class CustomClass:
         pass
@@ -404,9 +381,152 @@ def test_dfs_map_unknown_type():
     custom_obj = CustomClass()
 
     # Function that returns the same type
-    def identity(x):
+    def identity(_, x):
         return x
 
     # This should raise a ValueError
     with pytest.raises(ValueError, match="Unknown object type"):
         dfs_map(custom_obj, identity)
+
+
+def test_dfs_map_path_tracking_dict():
+    data = {"a": 1, "b": {"c": 2, "d": 3}}
+
+    paths_with_values = []
+
+    def collect_paths(path, x):
+        paths_with_values.append((str(path), x))
+        return x
+
+    dfs_map(data, collect_paths)
+
+    # Check that paths are correctly built and passed
+    assert ("", data) in paths_with_values
+    assert ("[a]", 1) in paths_with_values
+    assert ("[b]", {"c": 2, "d": 3}) in paths_with_values
+    assert ("[b][c]", 2) in paths_with_values
+    assert ("[b][d]", 3) in paths_with_values
+
+
+def test_dfs_map_path_tracking_list():
+    data = [1, [2, 3], 4]
+
+    paths_with_values = []
+
+    def collect_paths(path, x):
+        paths_with_values.append((str(path), x))
+        return x
+
+    dfs_map(data, collect_paths)
+
+    # Check that paths are correctly built and passed
+    assert ("", data) in paths_with_values
+    assert ("[0]", 1) in paths_with_values
+    assert ("[1]", [2, 3]) in paths_with_values
+    assert ("[1][0]", 2) in paths_with_values
+    assert ("[1][1]", 3) in paths_with_values
+    assert ("[2]", 4) in paths_with_values
+
+
+def test_dfs_map_path_tracking_mixed():
+    data = {"a": 1, "b": [2, {"c": 3}], "d": {"e": [4, 5]}}
+
+    paths_with_values = []
+
+    def collect_paths(path, x):
+        paths_with_values.append((str(path), x))
+        return x
+
+    dfs_map(data, collect_paths)
+
+    # Check that paths are correctly built and passed
+    assert ("", data) in paths_with_values
+    assert ("[a]", 1) in paths_with_values
+    assert ("[b]", [2, {"c": 3}]) in paths_with_values
+    assert ("[b][0]", 2) in paths_with_values
+    assert ("[b][1]", {"c": 3}) in paths_with_values
+    assert ("[b][1][c]", 3) in paths_with_values
+    assert ("[d]", {"e": [4, 5]}) in paths_with_values
+    assert ("[d][e]", [4, 5]) in paths_with_values
+    assert ("[d][e][0]", 4) in paths_with_values
+    assert ("[d][e][1]", 5) in paths_with_values
+
+
+def test_dfs_map_using_path_for_transformation():
+    data = {"a": 1, "b": {"c": 2, "d": 3}}
+
+    def transform_based_on_path(path, x):
+        # Double values at path [b][c]
+        if str(path) == "[b][c]" and isinstance(x, int):
+            return x * 2
+        # Triple values at path [a]
+        elif str(path) == "[a]" and isinstance(x, int):
+            return x * 3
+        return x
+
+    result = dfs_map(data, transform_based_on_path)
+
+    assert result["a"] == 3  # Tripled
+    assert result["b"]["c"] == 4  # Doubled
+    assert result["b"]["d"] == 3  # Unchanged
+
+
+def test_dfs_map_initial_path():
+    data = {"a": 1, "b": 2}
+
+    paths_with_values = []
+    initial_path = PathKey([ItemKey("root"), ItemKey("data")])
+
+    def collect_paths(path, x):
+        paths_with_values.append((str(path), x))
+        return x
+
+    dfs_map(data, collect_paths, path=initial_path)
+
+    # Paths should include the initial path
+    assert ("[root][data]", data) in paths_with_values
+    assert ("[root][data][a]", 1) in paths_with_values
+    assert ("[root][data][b]", 2) in paths_with_values
+
+
+def test_dfs_map_path_consistency():
+    data = {"a": {"b": {"c": 1}}}
+
+    path_sequence = []
+
+    def collect_path_sequence(path, x):
+        path_sequence.append(str(path))
+        return x
+
+    dfs_map(data, collect_path_sequence)
+
+    # Check the paths are built up correctly in sequence
+    assert path_sequence[0] == ""  # Root
+    assert path_sequence[1] == "[a]"
+    assert path_sequence[2] == "[a][b]"
+    assert path_sequence[3] == "[a][b][c]"
+
+
+def test_dfs_map_module_path():
+    class TestModule(Module):
+        def __init__(self):
+            self.value = 1
+            self.nested = {"a": 2}
+
+    module = TestModule()
+
+    paths_with_values = []
+
+    def collect_paths(path, x):
+        if not isinstance(
+            x, Module
+        ):  # We're not interested in collecting the module itself
+            paths_with_values.append((str(path), x))
+        return x
+
+    dfs_map(module, collect_paths)
+
+    # Check paths for module attributes
+    assert (".value", 1) in paths_with_values
+    assert (".nested", {"a": 2}) in paths_with_values
+    assert (".nested[a]", 2) in paths_with_values
