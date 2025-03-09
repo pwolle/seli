@@ -1,11 +1,14 @@
 import logging
+from collections.abc import Hashable
+from typing import Any
 
 import jax.tree_util as jtu
 
 logger = logging.getLogger(__name__)
 
 
-REGISTRY = {}
+REGISTRY: dict[str, Hashable] = {}
+REGISTRY_INVERSE: dict[Hashable, str] = {}
 
 
 class ModuleBase:
@@ -18,10 +21,10 @@ class ModuleBase:
             cls = jtu.register_pytree_node_class(cls)
 
         if name is not None:
-            register_module(name, cls, overwrite=overwrite)
+            registry_add(name, cls, overwrite=overwrite)
 
 
-def register_module(
+def registry_add(
     name: str,
     module: type,
     overwrite: bool = False,
@@ -31,3 +34,12 @@ def register_module(
         return
 
     REGISTRY[name] = module
+    REGISTRY_INVERSE[module] = name
+
+
+def registry_str(obj: Any) -> str:
+    return REGISTRY_INVERSE[obj]
+
+
+def registry_obj(name: str) -> Hashable:
+    return REGISTRY[name]

@@ -1,10 +1,9 @@
-from collections.abc import Callable, Sequence
-from dataclasses import dataclass
+from collections.abc import Callable, Hashable, Sequence
 from typing import Any, Self, TypeAlias
 
 import jax
 
-from src.seli._registry import ModuleBase
+from src.seli._registry import REGISTRY_INVERSE, ModuleBase
 from src.seli._typecheck import typecheck
 
 
@@ -62,11 +61,10 @@ class Module(ModuleBase):
 
 LeafType: TypeAlias = None | bool | int | float | str | jax.Array
 DeepType: TypeAlias = list | dict | Module
-NodeType: TypeAlias = LeafType | DeepType
+NodeType: TypeAlias = LeafType | DeepType | Any
 
 
 @typecheck
-@dataclass(frozen=True)
 class ItemKey(Module):
     """
     Key for accessing items using the [] operator.
@@ -74,6 +72,9 @@ class ItemKey(Module):
     """
 
     key: str | int
+
+    def __init__(self, key: str | int) -> None:
+        self.key = key
 
     def get(self, obj: dict | list) -> Any:
         return obj[self.key]
@@ -88,10 +89,15 @@ class ItemKey(Module):
     def __lt__(self, other: "ItemKey | AttrKey") -> bool:
         return keys_lt(self, other)
 
+    def __hash__(self) -> int:
+        return hash((type(self), self.key))
+
+    def __eq__(self, other: "ItemKey | AttrKey") -> bool:
+        return isinstance(other, ItemKey) and self.key == other.key
+
 
 @typecheck
-@dataclass(frozen=True)
-class AttrKey(Module):
+class AttrKey(ItemKey):
     """
     Key for accessing object attributes using the dot operator.
     Used to access attributes of an object using the dot notation (obj.attr).
@@ -99,24 +105,23 @@ class AttrKey(Module):
 
     key: str
 
+    def __init__(self, key: str) -> None:
+        self.key = key
+
     def get(self, obj: Any) -> Any:
         return getattr(obj, self.key)
 
     def set(self, obj: Any, value: Any) -> None:
-        setattr(obj, self.key, value)
+        object.__setattr__(obj, self.key, value)
 
     def __repr__(self):
         return f".{self.key}"
-
-    # add sorting to allow deterministic traversal
-    def __lt__(self, other: "ItemKey | AttrKey") -> bool:
-        return keys_lt(self, other)
 
 
 @typecheck
 def keys_lt(a: ItemKey | AttrKey, b: ItemKey | AttrKey) -> bool:
     if type(a) is not type(b):
-        return isinstance(a, ItemKey)
+        return type(a) is ItemKey
 
     if type(a.key) is not type(b.key):
         return isinstance(a.key, int)
@@ -125,7 +130,6 @@ def keys_lt(a: ItemKey | AttrKey, b: ItemKey | AttrKey) -> bool:
 
 
 @typecheck
-@dataclass(frozen=True)
 class PathKey(Module):
     """
     Sequence of keys that enables access to nested data structures.
@@ -134,6 +138,9 @@ class PathKey(Module):
     """
 
     path: list[ItemKey | AttrKey]
+
+    def __init__(self, path: list[ItemKey | AttrKey]) -> None:
+        self.path = path
 
     def __add__(self, item: ItemKey | AttrKey) -> "PathKey":
         return PathKey(self.path + [item])
@@ -167,6 +174,9 @@ class PathKey(Module):
 
     def __hash__(self):
         return hash((type(self), tuple(self.path)))
+
+    def __eq__(self, other):
+        return isinstance(other, PathKey) and self.path == other.path
 
 
 def dfs_map(
@@ -259,8 +269,16 @@ def dfs_map(
     obj_fun = fun(path, obj)
     refs[id(obj)] = obj_fun
 
-    if isinstance(obj_fun, (LeafType, PathKey)):
+    if isinstance(obj_fun, (LeafType)):
         return obj_fun
+
+    # if object is registered it is also a valid type, since we can covert it
+    # to a string and back, we need to test for hashability and non-module
+    # otherwise we cannot perform the isin check, the obj_fun may not be a
+    # Module, since Module.__hash__ would be a RecursionError.
+    if isinstance(obj_fun, Hashable) and not isinstance(obj_fun, Module):
+        if obj_fun in REGISTRY_INVERSE:
+            return obj_fun
 
     if isinstance(obj_fun, dict):
         if not all(isinstance(key, str) for key in obj_fun.keys()):
@@ -454,3 +472,20 @@ def flat_path_dict(obj: NodeType):
 
     # sort dict by keys for deterministic output
     return dict(sorted(nodes.items(), key=lambda x: x[0]))
+
+
+def test_keys_lt_different_types():
+    item_key = ItemKey(key="test")
+    attr_key = AttrKey(key="test")
+
+    # According to the implementation, an ItemKey should be less than an AttrKey
+    # Note: Current implementation has an error in this case
+    result = keys_lt(item_key, attr_key)
+    assert result is True
+    # The reverse should be False
+    result = keys_lt(attr_key, item_key)
+    assert result is False
+
+
+if __name__ == "__main__":
+    test_keys_lt_different_types()
