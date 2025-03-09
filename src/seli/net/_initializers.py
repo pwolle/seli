@@ -21,7 +21,7 @@ class Initializer(Module, "initializers.Initializer"):
         raise NotImplementedError("Initializers must be implemented")
 
 
-class Zeros(Initializer):
+class Zeros(Initializer, "initializers.Zeros"):
     def __call__(
         self,
         key: PRNGKeyArray,
@@ -32,7 +32,7 @@ class Zeros(Initializer):
         return jnp.zeros(shape, dtype)
 
 
-class Ones(Initializer):
+class Ones(Initializer, "initializers.Ones"):
     def __call__(
         self,
         key: PRNGKeyArray,
@@ -43,7 +43,7 @@ class Ones(Initializer):
 
 
 @typecheck
-class Normal(Initializer):
+class Normal(Initializer, "initializers.Normal"):
     """
     Initialize weights from a normal distribution. Weights can be scaled by
     the number of input or output units, or by the sum of input and output,
@@ -76,7 +76,7 @@ class Normal(Initializer):
         return w * scale
 
 
-class Uniform(Initializer):
+class Uniform(Initializer, "initializers.Uniform"):
     """
     Initialize weights from a uniform distribution. Weights can be scaled by
     the number of input or output units, or by the sum of input and output,
