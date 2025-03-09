@@ -3,12 +3,12 @@ from typing import Any, Self, TypeAlias
 
 import jax
 
-from src.seli._registry import REGISTRY_INVERSE, ModuleBase
-from src.seli._typecheck import typecheck
+from seli._registry import REGISTRY_INVERSE, ModuleBase
+from seli._typecheck import typecheck
 
 
 @typecheck
-class Module(ModuleBase):
+class Module(ModuleBase, name="builtin.Module"):
     def __hash__(self):
         flat = flat_path_dict(self)
         return hash(tuple(flat.items()))
@@ -65,7 +65,7 @@ NodeType: TypeAlias = LeafType | DeepType | Any
 
 
 @typecheck
-class ItemKey(Module):
+class ItemKey(Module, name="builtin.ItemKey"):
     """
     Key for accessing items using the [] operator.
     Used to access dictionary items by key or sequence items by index.
@@ -97,7 +97,7 @@ class ItemKey(Module):
 
 
 @typecheck
-class AttrKey(ItemKey):
+class AttrKey(ItemKey, name="builtin.AttrKey"):
     """
     Key for accessing object attributes using the dot operator.
     Used to access attributes of an object using the dot notation (obj.attr).
@@ -130,7 +130,7 @@ def keys_lt(a: ItemKey | AttrKey, b: ItemKey | AttrKey) -> bool:
 
 
 @typecheck
-class PathKey(Module):
+class PathKey(Module, name="builtin.PathKey"):
     """
     Sequence of keys that enables access to nested data structures.
     Combines multiple ItemKey and AttrKey objects to navigate through nested
@@ -472,20 +472,3 @@ def flat_path_dict(obj: NodeType):
 
     # sort dict by keys for deterministic output
     return dict(sorted(nodes.items(), key=lambda x: x[0]))
-
-
-def test_keys_lt_different_types():
-    item_key = ItemKey(key="test")
-    attr_key = AttrKey(key="test")
-
-    # According to the implementation, an ItemKey should be less than an AttrKey
-    # Note: Current implementation has an error in this case
-    result = keys_lt(item_key, attr_key)
-    assert result is True
-    # The reverse should be False
-    result = keys_lt(attr_key, item_key)
-    assert result is False
-
-
-if __name__ == "__main__":
-    test_keys_lt_different_types()

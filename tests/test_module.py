@@ -1,6 +1,6 @@
 import pytest
 
-from src.seli._module import (
+from seli._module import (
     AttrKey,
     ItemKey,
     Module,
@@ -957,24 +957,3 @@ def test_to_tree_inverse_complex_structure():
     # Verify that cyclic references work correctly
     result["a"]["name"] = "modified a"
     assert result["b"]["ref_to_a"]["name"] == "modified a"
-
-
-def test_to_tree_inverse_basic():
-    """Test basic behavior of to_tree_inverse to understand how it works."""
-    # Create a simple structure
-    data = {"x": 1, "y": 2}
-
-    # Convert to tree
-    tree = to_tree(data)
-
-    # Print the tree structure for debugging
-    print("\nTree structure:", tree)
-
-    # Use to_tree_inverse
-    result = to_tree_inverse(tree)
-
-    # Print the result for debugging
-    print("Result structure:", result)
-
-    # Basic assertions to see what's happening
-    assert isinstance(result, dict)

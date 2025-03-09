@@ -30,7 +30,12 @@ def registry_add(
     overwrite: bool = False,
 ) -> None:
     if not overwrite and name in REGISTRY:
-        logger.warning(f"Module {name} already registered, skipping")
+        if REGISTRY[name] is module:
+            return
+
+        msg = f"Module {name} already registered, skipping {module} ({type(module)})"
+        msg += f" already registered as {REGISTRY[name]} ({type(REGISTRY[name])})"
+        logger.warning(msg)
         return
 
     REGISTRY[name] = module
