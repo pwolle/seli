@@ -71,3 +71,13 @@ make html
 ```
 
 The documentation will be available in `docs/_build/html`.
+
+
+### Roadmap
+- [ ] Module Meta
+- [ ] Serialize
+- [ ] Layers
+- [ ] Optimizer
+- [ ] Dataloader
+- [ ] Supervised examples
+- [ ] Unsupervised examples

@@ -2,15 +2,57 @@ from dataclasses import dataclass
 from typing import Callable, TypeAlias
 
 import jax
+import jax.tree_util as jtu
 
 
+@jtu.register_pytree_node_class
 class Module:
     def __hash__(self):
         flat = flat_path_dict(self)
-        return hash(tuple(sorted(flat.items())))
+        return hash(tuple(flat.items()))
 
     def __eq__(self, other):
         return flat_path_dict(self) == flat_path_dict(other)
+
+    def tree_flatten(obj: "Module"):
+        tree = to_tree(obj)
+        arrs: dict[PathKey, jax.Array] = {}
+
+        def get_arrs(path: PathKey, obj: NodeType):
+            if isinstance(obj, jax.Array):
+                arrs[path] = obj
+                return None
+
+            return obj
+
+        tree = dfs_map(tree, get_arrs)
+
+        arrs_keys = list(arrs.keys())
+        arrs_vals = [arrs[key] for key in arrs_keys]
+
+        return arrs_vals, (arrs_keys, tree)
+
+    @classmethod
+    def tree_unflatten(
+        cls,
+        aux_data: tuple[list["PathKey"], "NodeType"],
+        arrs_vals: list[jax.Array],
+    ):
+        arrs_keys, tree = aux_data
+        obj = to_tree_inverse(tree)
+
+        for path, child in zip(arrs_keys, arrs_vals):
+            path.set(obj, child)
+
+        return obj
+
+    def __repr__(self):
+        head = f"{self.__class__.__name__}(\n"
+        for key, value in self.__dict__.items():
+            head += f"  {key}: {str(value).replace('\n', '\n  ')}\n"
+
+        head += ")"
+        return head
 
 
 LeafType: TypeAlias = None | bool | int | float | str | jax.Array
@@ -304,7 +346,7 @@ def to_tree(obj: NodeType):
       if needed.
     - The function uses dfs_map internally to traverse the structure.
     """
-    id_to_path = {}
+    id_to_path: dict[int, PathKey] = {}
 
     def fun(path: PathKey, obj: NodeType):
         id_to_path[id(obj)] = path
@@ -366,15 +408,37 @@ def to_tree_inverse(obj: NodeType):
 
 
 def flat_path_dict(obj: NodeType):
+    """
+    Convert a nested object structure into a flat dictionary representation.
+
+    This function transforms a potentially nested object into a flat dictionary
+    where:
+    - Each entry is keyed by a PathKey representing its location in the original
+      structure
+    - Leaf values and PathKey references are preserved directly
+    - For non-leaf nodes, their class name is stored under a __class__ attribute
+      key
+
+    The resulting dictionary provides a serializable, deterministic
+    representation of the object's structure that preserves paths and type
+    information.
+
+    Args:
+        obj: The object to convert to a flat path dictionary
+
+    Returns:
+        A dictionary mapping PathKey objects to values, sorted by path for
+        deterministic output
+    """
     tree = to_tree(obj)
-    nodes = {}
+    nodes: dict[PathKey, NodeType] = {}
 
     def add_node(path, node: NodeType):
         if isinstance(node, (LeafType, PathKey)):
             nodes[path] = node
             return node
 
-        nodes[path + AttrKey("__class__")] = type(node).__name__
+        nodes[path + AttrKey("__class__")] = type(node)
         return node
 
     dfs_map(tree, add_node)
