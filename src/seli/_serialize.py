@@ -1,7 +1,9 @@
 import json
 from collections.abc import Hashable
+from pathlib import Path
 
 import jax
+import jax.numpy as jnp
 
 from seli._module import (
     Module,
@@ -108,5 +110,22 @@ def from_arrays_and_json(arrays: list[jax.Array], obj_json: str) -> NodeType:
     return to_tree_inverse(obj)
 
 
-def save(path: str, obj: NodeType):
+def save(path: str | Path, obj: NodeType) -> None:
     arrays, obj_json = to_arrays_and_json(obj)
+    arrays.append(obj_json)
+    jnp.savez(path, *arrays)
+
+
+def load(path: str | Path) -> NodeType:
+    arrays = list(jnp.load(path).values())
+
+    # pop the last element, which is the json string
+    # this one cannot be converted to a jax.Array
+    obj_json = str(arrays.pop(-1))
+
+    # convert all arrays to jax, as those are expected by dfs_map used in
+    # from_arrays_and_json, since they are immutable
+    arrays = [jnp.array(array) for array in arrays]
+
+    obj = from_arrays_and_json(arrays, obj_json)
+    return obj

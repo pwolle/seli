@@ -387,7 +387,7 @@ def dfs_map(
 
         return obj_new
 
-    raise ValueError(f"Unknown object type: {type(obj)}, {obj}")
+    raise ValueError(f"Unknown object type: {type(obj_fun)}, {obj_fun}")
 
 
 def to_tree(obj: NodeType):
