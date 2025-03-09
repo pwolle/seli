@@ -43,8 +43,18 @@ def registry_add(
 
 
 def registry_str(obj: Any) -> str:
-    return REGISTRY_INVERSE[obj]
+    return f"__registry__:{REGISTRY_INVERSE[obj]}"
 
 
 def registry_obj(name: str) -> Hashable:
+    assert is_registry_str(name)
+    name = name[len("__registry__:") :]
+
+    if name not in REGISTRY:
+        raise ValueError(f"Module {name} not registered")
+
     return REGISTRY[name]
+
+
+def is_registry_str(obj: Any) -> bool:
+    return isinstance(obj, str) and obj.startswith("__registry__:")

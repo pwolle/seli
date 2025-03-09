@@ -59,7 +59,7 @@ class Module(ModuleBase, name="builtin.Module"):
         return head
 
 
-LeafType: TypeAlias = None | bool | int | float | str | jax.Array
+LeafType: TypeAlias = None | bool | int | float | str | type | jax.Array
 DeepType: TypeAlias = list | dict | Module
 NodeType: TypeAlias = LeafType | DeepType | Any
 
@@ -339,7 +339,7 @@ def dfs_map(
 
         return obj_new
 
-    raise ValueError(f"Unknown object type: {type(obj)}")
+    raise ValueError(f"Unknown object type: {type(obj)}, {obj}")
 
 
 def to_tree(obj: NodeType):
