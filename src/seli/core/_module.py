@@ -4,8 +4,21 @@ from typing import Any, Self, TypeAlias
 
 import jax
 
-from seli._registry import REGISTRY_INVERSE, ModuleBase
-from seli._typecheck import typecheck
+from seli.core._registry import REGISTRY_INVERSE, ModuleBase
+from seli.core._typecheck import typecheck
+
+__all__ = [
+    "Module",
+    "ItemKey",
+    "AttrKey",
+    "PathKey",
+    "NodeType",
+    "LeafType",
+    "to_tree",
+    "to_tree_inverse",
+    "flat_path_dict",
+    "dfs_map",
+]
 
 
 @typecheck
@@ -88,7 +101,7 @@ class ItemKey(Module, name="builtin.ItemKey"):
 
     # add sorting to allow deterministic traversal
     def __lt__(self, other: "ItemKey | AttrKey") -> bool:
-        return keys_lt(self, other)
+        return _keys_lt(self, other)
 
     def __hash__(self) -> int:
         return hash((type(self), self.key))
@@ -145,7 +158,7 @@ class AttrKey(ItemKey, name="builtin.AttrKey"):
 
 
 @typecheck
-def keys_lt(a: ItemKey | AttrKey, b: ItemKey | AttrKey) -> bool:
+def _keys_lt(a: ItemKey | AttrKey, b: ItemKey | AttrKey) -> bool:
     if type(a) is not type(b):
         return type(a) is ItemKey
 

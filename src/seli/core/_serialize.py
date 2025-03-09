@@ -5,7 +5,7 @@ from pathlib import Path
 import jax
 import jax.numpy as jnp
 
-from seli._module import (
+from seli.core._module import (
     Module,
     NodeType,
     PathKey,
@@ -13,14 +13,24 @@ from seli._module import (
     to_tree,
     to_tree_inverse,
 )
-from seli._registry import (
+from seli.core._registry import (
     REGISTRY_INVERSE,
     is_registry_str,
     registry_obj,
     registry_str,
 )
+from seli.core._typecheck import typecheck
+
+__all__ = [
+    "ArrayPlaceholder",
+    "save",
+    "load",
+    "to_arrays_and_json",
+    "from_arrays_and_json",
+]
 
 
+@typecheck
 class ArrayPlaceholder(Module, name="builtin.ArrayPlaceholder"):
     index: int
 
@@ -28,6 +38,7 @@ class ArrayPlaceholder(Module, name="builtin.ArrayPlaceholder"):
         self.index = index
 
 
+@typecheck
 def to_arrays_and_json(obj: NodeType) -> tuple[list[jax.Array], str]:
     arrays = []
 
@@ -73,6 +84,7 @@ def to_arrays_and_json(obj: NodeType) -> tuple[list[jax.Array], str]:
     return arrays, json.dumps(obj)
 
 
+@typecheck
 def from_arrays_and_json(arrays: list[jax.Array], obj_json: str) -> NodeType:
     def fun_registry(_: PathKey, x: NodeType):
         if is_registry_str(x):
@@ -110,12 +122,14 @@ def from_arrays_and_json(arrays: list[jax.Array], obj_json: str) -> NodeType:
     return to_tree_inverse(obj)
 
 
+@typecheck
 def save(path: str | Path, obj: NodeType) -> None:
     arrays, obj_json = to_arrays_and_json(obj)
     arrays.append(obj_json)
     jnp.savez(path, *arrays)
 
 
+@typecheck
 def load(path: str | Path) -> NodeType:
     arrays = list(jnp.load(path).values())
 

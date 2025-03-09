@@ -74,8 +74,8 @@ The documentation will be available in `docs/_build/html`.
 
 
 ### Roadmap
-- [ ] Module Meta
-- [ ] Serialize
+- [x] Module Meta
+- [x] Serialize
 - [ ] Layers
 - [ ] Optimizer
 - [ ] Dataloader

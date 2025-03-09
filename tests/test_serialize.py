@@ -4,8 +4,8 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from seli._module import Module
-from seli._serialize import (
+from seli.core._module import Module
+from seli.core._serialize import (
     ArrayPlaceholder,
     from_arrays_and_json,
     to_arrays_and_json,

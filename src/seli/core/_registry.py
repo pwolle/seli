@@ -4,18 +4,29 @@ from typing import Any
 
 import jax.tree_util as jtu
 
+from seli.core._typecheck import typecheck
+
 logger = logging.getLogger(__name__)
+
+
+__all__ = [
+    "registry_add",
+    "registry_str",
+    "registry_obj",
+    "is_registry_str",
+]
 
 
 REGISTRY: dict[str, Hashable] = {}
 REGISTRY_INVERSE: dict[Hashable, str] = {}
 
 
+@typecheck
 class ModuleBase:
     def __init_subclass__(
         cls,
         name: str | None = None,
-        overwrite: bool | None = None,
+        overwrite: bool = False,
     ):
         if hasattr(cls, "tree_flatten") and hasattr(cls, "tree_unflatten"):
             cls = jtu.register_pytree_node_class(cls)
@@ -24,6 +35,7 @@ class ModuleBase:
             registry_add(name, cls, overwrite=overwrite)
 
 
+@typecheck
 def registry_add(
     name: str,
     module: type,
@@ -42,12 +54,16 @@ def registry_add(
     REGISTRY_INVERSE[module] = name
 
 
+@typecheck
 def registry_str(obj: Any) -> str:
     return f"__registry__:{REGISTRY_INVERSE[obj]}"
 
 
+@typecheck
 def registry_obj(name: str) -> Hashable:
-    assert is_registry_str(name)
+    if not is_registry_str(name):
+        raise ValueError(f"Invalid registry string: {name}")
+
     name = name[len("__registry__:") :]
 
     if name not in REGISTRY:
@@ -56,5 +72,6 @@ def registry_obj(name: str) -> Hashable:
     return REGISTRY[name]
 
 
+@typecheck
 def is_registry_str(obj: Any) -> bool:
     return isinstance(obj, str) and obj.startswith("__registry__:")

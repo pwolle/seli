@@ -1,6 +1,6 @@
 import pytest
 
-from seli._module import AttrKey, ItemKey, PathKey
+from seli.core._module import AttrKey, ItemKey, PathKey
 
 
 def test_item_key_from_str_with_string_key():

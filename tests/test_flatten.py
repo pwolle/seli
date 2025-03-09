@@ -2,7 +2,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from seli._module import (
+from seli.core._module import (
     AttrKey,
     ItemKey,
     Module,

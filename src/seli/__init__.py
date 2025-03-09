@@ -2,6 +2,6 @@
 
 __version__ = "0.1.0"
 
-from ._module import AttrKey, ItemKey, Module, PathKey, dfs_map
+from .core._module import AttrKey, ItemKey, Module, PathKey, dfs_map
 
 __all__ = ["Module", "ItemKey", "AttrKey", "PathKey", "dfs_map"]
