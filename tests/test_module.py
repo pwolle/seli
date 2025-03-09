@@ -530,3 +530,127 @@ def test_dfs_map_module_path():
     assert (".value", 1) in paths_with_values
     assert (".nested", {"a": 2}) in paths_with_values
     assert (".nested[a]", 2) in paths_with_values
+
+
+def test_dfs_map_refs_fun_circular_reference():
+    # Create a circular reference structure
+    a = {"name": "a"}
+    b = {"name": "b", "ref": a}
+    a["ref"] = b  # Create circular reference
+
+    # Keep track of how many times each object is processed
+    process_count = {}
+
+    def count_refs(path, x):
+        obj_id = id(x)
+        process_count[obj_id] = process_count.get(obj_id, 0) + 1
+        return x
+
+    # Custom function for handling reference objects
+    def refs_handler(path, x):
+        # Replace circular references with a marker
+        return {"circular_ref": True, "name": x.get("name", "unknown")}
+
+    # Process the structure with refs_fun
+    result = dfs_map(a, count_refs, refs_fun=refs_handler)
+
+    # When we find b in a["ref"], it should be replaced with the marker
+    # And when we find a in b["ref"], it should also be replaced with the marker
+    assert result["ref"]["ref"]["circular_ref"] is True
+
+    # Original objects should only be processed once
+    assert process_count[id(a)] == 1
+    assert process_count[id(b)] == 1
+
+
+def test_dfs_map_refs_fun_transformation():
+    # Create a structure with duplicate references
+    inner = {"value": 10}
+    data = {
+        "a": inner,
+        "b": inner,  # Same reference as a
+        "c": {"value": 10},  # Same value but different reference
+    }
+
+    seen_objects = set()
+    paths_seen = []
+
+    def track_objects(path, x):
+        paths_seen.append(str(path))
+        seen_objects.add(id(x))
+        return x
+
+    # Refs function that transforms repeated references
+    def transform_refs(path, x):
+        # Only transform dictionary objects
+        if isinstance(x, dict) and "value" in x:
+            return {"transformed": True, "original_value": x["value"]}
+        return x
+
+    result = dfs_map(data, track_objects, refs_fun=transform_refs)
+
+    # Check for the transformed value in b
+    assert "value" in result["a"]
+    assert "transformed" in result["b"]
+
+    # The object with same value but different reference should be unchanged
+    assert "transformed" not in result["c"]
+
+
+def test_dfs_map_refs_fun_with_modules():
+    # Create a module with a reference to itself
+    class SelfReferencingModule(Module):
+        def __init__(self):
+            self.value = 5
+            self.self_ref = None
+
+    module = SelfReferencingModule()
+    module.self_ref = module  # Create self-reference
+
+    paths_processed = []
+
+    def collect_path(path, x):
+        if not isinstance(x, Module):
+            paths_processed.append(str(path))
+        return x
+
+    # Custom function to handle references to avoid infinite recursion
+    def handle_module_refs(path, x):
+        if isinstance(x, Module):
+            return {"module_ref": True, "path": str(path)}
+        return x
+
+    result = dfs_map(module, collect_path, refs_fun=handle_module_refs)
+
+    # Check that we have the original module with properly handled self-reference
+    assert isinstance(result, Module)
+    assert isinstance(result.self_ref, dict)
+    assert result.self_ref["module_ref"] is True
+    assert "path" in result.self_ref
+
+    # We should have only processed .value once
+    assert paths_processed.count(".value") == 1
+
+
+def test_dfs_map_refs_fun_none():
+    # Test behavior when refs_fun is None
+
+    # Create structure with duplicate references
+    shared = {"data": 123}
+    obj = {"a": shared, "b": shared}
+
+    def identity(path, x):
+        return x
+
+    # Let's examine the implementation logic of dfs_map
+    # Even with refs_fun=None, new objects are created during traversal
+    result = dfs_map(obj, identity)  # refs_fun defaults to None
+
+    # Test that the values are the same even if the objects are different
+    assert result["a"]["data"] == 123
+    assert result["b"]["data"] == 123
+
+    # Modify one reference and check that it doesn't affect the other
+    # since they are separate objects in the result
+    result["a"]["data"] = 456
+    assert result["b"]["data"] == 123

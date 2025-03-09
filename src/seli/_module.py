@@ -14,7 +14,7 @@ NodeType: TypeAlias = LeafType | DeepType
 
 
 @dataclass
-class ItemKey:
+class ItemKey(Module):
     key: str | int
 
     def get(self, obj):
@@ -28,7 +28,7 @@ class ItemKey:
 
 
 @dataclass
-class AttrKey:
+class AttrKey(Module):
     attr: str
 
     def get(self, obj):
@@ -42,7 +42,7 @@ class AttrKey:
 
 
 @dataclass
-class PathKey:
+class PathKey(Module):
     path: list[ItemKey]
 
     def __add__(self, item: ItemKey) -> "PathKey":
@@ -80,6 +80,71 @@ def dfs_map(
     path: PathKey | None = None,
     refs_fun: Callable[[PathKey, NodeType], NodeType] | None = None,
 ) -> DeepType | LeafType:
+    """
+    Performs a depth-first traversal of a nested data structure, applying a
+    transformation function to each element.
+
+    This function traverses dictionaries, lists, and Module objects recursively
+    in a depth-first manner, applying the provided transformation function to
+    each element. It builds a new structure with the same shape as the original,
+    but with transformed values. During traversal, it tracks the path to each
+    element and handles circular references to prevent infinite recursion.
+
+    Args:
+        obj: The object to traverse, which can be a dictionary, list, Module,
+            or a leaf value.
+            - Dictionaries must have string keys.
+            - Lists are traversed in order.
+            - Module objects have their attributes traversed alphabetically.
+            - All other types are treated as leaf values.
+
+        fun: A transformation function to apply to each element in the structure.
+            The function should accept two arguments:
+                - path: A PathKey object representing the current path
+                - x: The current element being processed
+            And return a transformed version of the element.
+
+        refs: Optional. A dictionary mapping object IDs to their transformed
+            versions. Used internally to track already-processed objects and
+            handle circular references. Default is None (an empty dict will be
+            created).
+
+        path: Optional. A PathKey object representing the current path in the
+            structure. Used for tracking position during recursive calls.
+            Default is None (an empty PathKey will be created).
+
+        refs_fun: Optional. A function to handle repeated references.
+            When an object is encountered multiple times during traversal:
+                - If refs_fun is None, the already-processed version is
+                  returned directly.
+                - If refs_fun is provided, it's called with (path, processed_obj)
+                  to determine what to return for the repeated reference.
+            Default is None.
+
+    Returns:
+        A new structure with the same shape as the input, but with all elements
+        transformed according to the provided function.
+
+    Raises:
+        ValueError: If an object of an unsupported type is encountered.
+            Supported types are: dictionaries, lists, Module objects, and leaf
+            values.
+        TypeError: If a dictionary with non-string keys is encountered.
+
+    Notes:
+        - The function preserves the structure of the original object while
+          creating a new transformed copy.
+        - Dictionary keys and Module attributes are processed in sorted order for
+          deterministic traversal.
+        - For circular references, the function uses the refs_fun parameter to
+          determine how to handle them.
+        - Module objects are created using object.__new__ without calling
+          __init__, which may bypass important initialization logic.
+        - The path parameter tracks the exact location of each element in the
+          nested structure using:
+            - ItemKey for dictionary keys and list indices
+            - AttrKey for Module attributes
+    """
     path = path or PathKey([])
     refs = refs or {}
 
@@ -96,11 +161,13 @@ def dfs_map(
         return obj_fun
 
     if isinstance(obj_fun, dict):
-        assert all(isinstance(key, str) for key in obj_fun.keys())
+        if not all(isinstance(key, str) for key in obj_fun.keys()):
+            error = f"Dictionary keys must be strings got {obj_fun.keys()}"
+            raise TypeError(error)
 
         obj_new = {}
 
-        for key, value in sorted(obj.items(), key=lambda x: x[0]):
+        for key, value in sorted(obj_fun.items(), key=lambda x: x[0]):
             obj_new[key] = dfs_map(
                 value,
                 fun,
