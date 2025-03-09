@@ -1,6 +1,5 @@
 import jax
 import jax.numpy as jnp
-import jax.tree_util as jtu
 import numpy as np
 
 from src.seli._module import (
@@ -12,7 +11,6 @@ from src.seli._module import (
 )
 
 
-@jtu.register_pytree_node_class
 class _TestModuleClass(Module):
     def __init__(self):
         self.value = 1
@@ -21,7 +19,6 @@ class _TestModuleClass(Module):
         self.nested_module = _NestedModuleClass()
 
 
-@jtu.register_pytree_node_class
 class _NestedModuleClass(Module):
     def __init__(self):
         self.value = 2
@@ -142,7 +139,6 @@ def test_tree_flatten_unflatten_simple():
 
 
 def test_tree_flatten_unflatten_jax_jit():
-    @jtu.register_pytree_node_class
     class SimpleModule(Module):
         def __init__(self, x):
             self.weight = x
@@ -160,7 +156,6 @@ def test_tree_flatten_unflatten_jax_jit():
 
 def test_tree_flatten_unflatten_complex():
     # Create a complex module with nested arrays
-    @jtu.register_pytree_node_class
     class ComplexModule(Module):
         def __init__(self):
             self.arrays = {
@@ -171,7 +166,6 @@ def test_tree_flatten_unflatten_complex():
             self.nested = NestedModuleForComplex()
             self.value = "not an array"
 
-    @jtu.register_pytree_node_class
     class NestedModuleForComplex(Module):
         def __init__(self):
             self.value = 2
@@ -208,7 +202,6 @@ def test_tree_flatten_unflatten_complex():
 
 
 def test_tree_jit_shared_references():
-    @jtu.register_pytree_node_class
     class SharedModule(Module):
         def __init__(self, x):
             self.shared1 = {"key": x}

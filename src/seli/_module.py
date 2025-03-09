@@ -1,12 +1,15 @@
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from typing import Callable, TypeAlias
+from typing import Any, Self, TypeAlias
 
 import jax
-import jax.tree_util as jtu
+
+from src.seli._registry import ModuleBase
+from src.seli._typecheck import typecheck
 
 
-@jtu.register_pytree_node_class
-class Module:
+@typecheck
+class Module(ModuleBase):
     def __hash__(self):
         flat = flat_path_dict(self)
         return hash(tuple(flat.items()))
@@ -14,8 +17,10 @@ class Module:
     def __eq__(self, other):
         return flat_path_dict(self) == flat_path_dict(other)
 
-    def tree_flatten(obj: "Module"):
-        tree = to_tree(obj)
+    def tree_flatten(
+        self,
+    ) -> tuple[list[jax.Array], tuple[list["PathKey"], "NodeType"]]:
+        tree = to_tree(self)
         arrs: dict[PathKey, jax.Array] = {}
 
         def get_arrs(path: PathKey, obj: NodeType):
@@ -34,10 +39,10 @@ class Module:
 
     @classmethod
     def tree_unflatten(
-        cls,
+        cls: type[Self],
         aux_data: tuple[list["PathKey"], "NodeType"],
-        arrs_vals: list[jax.Array],
-    ):
+        arrs_vals: Sequence[jax.Array],
+    ) -> Self:
         arrs_keys, tree = aux_data
         obj = to_tree_inverse(tree)
 
@@ -60,6 +65,7 @@ DeepType: TypeAlias = list | dict | Module
 NodeType: TypeAlias = LeafType | DeepType
 
 
+@typecheck
 @dataclass(frozen=True)
 class ItemKey(Module):
     """
@@ -69,20 +75,21 @@ class ItemKey(Module):
 
     key: str | int
 
-    def get(self, obj):
+    def get(self, obj: dict | list) -> Any:
         return obj[self.key]
 
-    def set(self, obj, value):
+    def set(self, obj: dict | list, value: Any) -> None:
         obj[self.key] = value
 
     def __repr__(self):
         return f"[{self.key}]"
 
     # add sorting to allow deterministic traversal
-    def __lt__(self, other):
+    def __lt__(self, other: "ItemKey | AttrKey") -> bool:
         return keys_lt(self, other)
 
 
+@typecheck
 @dataclass(frozen=True)
 class AttrKey(Module):
     """
@@ -92,20 +99,21 @@ class AttrKey(Module):
 
     key: str
 
-    def get(self, obj):
+    def get(self, obj: Any) -> Any:
         return getattr(obj, self.key)
 
-    def set(self, obj, value):
+    def set(self, obj: Any, value: Any) -> None:
         setattr(obj, self.key, value)
 
     def __repr__(self):
         return f".{self.key}"
 
     # add sorting to allow deterministic traversal
-    def __lt__(self, other):
+    def __lt__(self, other: "ItemKey | AttrKey") -> bool:
         return keys_lt(self, other)
 
 
+@typecheck
 def keys_lt(a: ItemKey | AttrKey, b: ItemKey | AttrKey) -> bool:
     if type(a) is not type(b):
         return isinstance(a, ItemKey)
@@ -116,6 +124,7 @@ def keys_lt(a: ItemKey | AttrKey, b: ItemKey | AttrKey) -> bool:
     return a.key < b.key
 
 
+@typecheck
 @dataclass(frozen=True)
 class PathKey(Module):
     """
@@ -126,7 +135,7 @@ class PathKey(Module):
 
     path: list[ItemKey | AttrKey]
 
-    def __add__(self, item: ItemKey) -> "PathKey":
+    def __add__(self, item: ItemKey | AttrKey) -> "PathKey":
         return PathKey(self.path + [item])
 
     def get(self, obj):
@@ -135,7 +144,7 @@ class PathKey(Module):
 
         return obj
 
-    def set(self, obj, value):
+    def set(self, obj: DeepType, value: NodeType):
         # Handle empty path
         if not self.path:
             return
