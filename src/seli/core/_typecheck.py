@@ -1,3 +1,8 @@
+"""
+Checking types based on the type hints of the function arguments. This saves
+a lot of boilerplate tests, since the type hints will automatically be checked.
+"""
+
 import beartype
 
 __all__ = ["typecheck"]

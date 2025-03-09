@@ -1,3 +1,8 @@
+"""
+Modules are the core data structure for organising state. This module provides
+the core functionality for creating, traversing, and modifying modules.
+"""
+
 import re
 from collections.abc import Callable, Hashable, Sequence
 from typing import Any, Self, TypeAlias

@@ -1,3 +1,9 @@
+"""
+This module provides functionality for serializing and deserializing modules.
+The core idea is to take out all arrays from the module and then serialize the
+module structure as a JSON string with the help of the registry.
+"""
+
 import json
 from collections.abc import Hashable
 from pathlib import Path

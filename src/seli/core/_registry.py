@@ -1,3 +1,13 @@
+"""
+This module provides a system for registering modules. This is useful for
+serializing and deserializing modules without having to know the module
+structure beforehand.
+
+See the `_serialize` module for more information on how this is used. This is
+a separate module, because the registry is needed in the module system, but
+the module system is needed in the serialize module.
+"""
+
 import logging
 from collections.abc import Hashable
 from typing import Any
