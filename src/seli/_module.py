@@ -1,3 +1,4 @@
+import re
 from collections.abc import Callable, Hashable, Sequence
 from typing import Any, Self, TypeAlias
 
@@ -83,7 +84,7 @@ class ItemKey(Module, name="builtin.ItemKey"):
         obj[self.key] = value
 
     def __repr__(self):
-        return f"[{self.key}]"
+        return f"[{self.key!r}]"
 
     # add sorting to allow deterministic traversal
     def __lt__(self, other: "ItemKey | AttrKey") -> bool:
@@ -94,6 +95,21 @@ class ItemKey(Module, name="builtin.ItemKey"):
 
     def __eq__(self, other: "ItemKey | AttrKey") -> bool:
         return isinstance(other, ItemKey) and self.key == other.key
+
+    @classmethod
+    def from_str(cls, s: str) -> "ItemKey":
+        if not s.startswith("[") and not s.endswith("]"):
+            raise ValueError(f"Invalid item key string: {s}")
+
+        key = s[1:-1]
+        if key.startswith("'") and key.endswith("'"):
+            key = key[1:-1]
+            return cls(key)
+
+        if not key.isdigit():
+            raise ValueError(f"Invalid item key string: `{key}`")
+
+        return cls(int(key))
 
 
 @typecheck
@@ -116,6 +132,16 @@ class AttrKey(ItemKey, name="builtin.AttrKey"):
 
     def __repr__(self):
         return f".{self.key}"
+
+    @classmethod
+    def from_str(cls, s: str) -> "AttrKey":
+        if not s.startswith(".") or len(s) < 2:
+            raise ValueError(f"Invalid attribute key string: {s}")
+
+        if not s[1:].isidentifier():
+            raise ValueError(f"Invalid attribute key string: {s}")
+
+        return cls(s[1:])
 
 
 @typecheck
@@ -166,7 +192,7 @@ class PathKey(Module, name="builtin.PathKey"):
         last_item.set(parent, value)
 
     def __repr__(self):
-        return "".join(str(item) for item in self.path)
+        return "".join(repr(item) for item in self.path)
 
     # add sorting to allow deterministic traversal
     def __lt__(self, other):
@@ -177,6 +203,28 @@ class PathKey(Module, name="builtin.PathKey"):
 
     def __eq__(self, other):
         return isinstance(other, PathKey) and self.path == other.path
+
+    @classmethod
+    def from_str(cls, s: str) -> "PathKey":
+        key_parts = re.split(r"(?=[.\[])", s)
+        keys = []
+
+        for part in key_parts:
+            # regular expression might produce emtpy string at the start or end
+            if not part:
+                continue
+
+            if part.startswith("."):
+                keys.append(AttrKey.from_str(part))
+                continue
+
+            if part.startswith("["):
+                keys.append(ItemKey.from_str(part))
+                continue
+
+            raise ValueError(f"Invalid path key string: {s}")
+
+        return cls(keys)
 
 
 def dfs_map(

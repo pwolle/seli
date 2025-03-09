@@ -106,3 +106,7 @@ def from_arrays_and_json(arrays: list[jax.Array], obj_json: str) -> NodeType:
     obj = dfs_map(obj, fun_arrays)
 
     return to_tree_inverse(obj)
+
+
+def save(path: str, obj: NodeType):
+    arrays, obj_json = to_arrays_and_json(obj)

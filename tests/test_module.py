@@ -284,7 +284,7 @@ def test_item_key_methods():
     assert obj["test"] == 84
 
     # Test repr method
-    assert repr(item_key) == "[test]"
+    assert repr(item_key) == "['test']"
 
     # Test with integer key
     item_key_int = ItemKey(1)
@@ -348,8 +348,8 @@ def test_path_key_methods():
     assert nested_obj["level1"]["level2"] == 99
 
     # Test repr method
-    assert repr(path1) == "[level1]"
-    assert repr(path2) == "[level1][level2]"
+    assert repr(path1) == "['level1']"
+    assert repr(path2) == "['level1']['level2']"
 
     # Test empty path
     empty_path = PathKey([])
@@ -373,9 +373,9 @@ def test_path_key_repr():
     path3 = path2 + key3
 
     # Test repr method
-    assert repr(path1) == "[level1]"
-    assert repr(path2) == "[level1][level2]"
-    assert repr(path3) == "[level1][level2][3]"
+    assert repr(path1) == "['level1']"
+    assert repr(path2) == "['level1']['level2']"
+    assert repr(path3) == "['level1']['level2'][3]"
 
     # Test empty path
     empty_path = PathKey([])
@@ -411,10 +411,10 @@ def test_dfs_map_path_tracking_dict():
 
     # Check that paths are correctly built and passed
     assert ("", data) in paths_with_values
-    assert ("[a]", 1) in paths_with_values
-    assert ("[b]", {"c": 2, "d": 3}) in paths_with_values
-    assert ("[b][c]", 2) in paths_with_values
-    assert ("[b][d]", 3) in paths_with_values
+    assert ("['a']", 1) in paths_with_values
+    assert ("['b']", {"c": 2, "d": 3}) in paths_with_values
+    assert ("['b']['c']", 2) in paths_with_values
+    assert ("['b']['d']", 3) in paths_with_values
 
 
 def test_dfs_map_path_tracking_list():
@@ -450,15 +450,15 @@ def test_dfs_map_path_tracking_mixed():
 
     # Check that paths are correctly built and passed
     assert ("", data) in paths_with_values
-    assert ("[a]", 1) in paths_with_values
-    assert ("[b]", [2, {"c": 3}]) in paths_with_values
-    assert ("[b][0]", 2) in paths_with_values
-    assert ("[b][1]", {"c": 3}) in paths_with_values
-    assert ("[b][1][c]", 3) in paths_with_values
-    assert ("[d]", {"e": [4, 5]}) in paths_with_values
-    assert ("[d][e]", [4, 5]) in paths_with_values
-    assert ("[d][e][0]", 4) in paths_with_values
-    assert ("[d][e][1]", 5) in paths_with_values
+    assert ("['a']", 1) in paths_with_values
+    assert ("['b']", [2, {"c": 3}]) in paths_with_values
+    assert ("['b'][0]", 2) in paths_with_values
+    assert ("['b'][1]", {"c": 3}) in paths_with_values
+    assert ("['b'][1]['c']", 3) in paths_with_values
+    assert ("['d']", {"e": [4, 5]}) in paths_with_values
+    assert ("['d']['e']", [4, 5]) in paths_with_values
+    assert ("['d']['e'][0]", 4) in paths_with_values
+    assert ("['d']['e'][1]", 5) in paths_with_values
 
 
 def test_dfs_map_using_path_for_transformation():
@@ -466,10 +466,10 @@ def test_dfs_map_using_path_for_transformation():
 
     def transform_based_on_path(path, x):
         # Double values at path [b][c]
-        if str(path) == "[b][c]" and isinstance(x, int):
+        if str(path) == "['b']['c']" and isinstance(x, int):
             return x * 2
         # Triple values at path [a]
-        elif str(path) == "[a]" and isinstance(x, int):
+        elif str(path) == "['a']" and isinstance(x, int):
             return x * 3
         return x
 
@@ -493,9 +493,9 @@ def test_dfs_map_initial_path():
     dfs_map(data, collect_paths, path=initial_path)
 
     # Paths should include the initial path
-    assert ("[root][data]", data) in paths_with_values
-    assert ("[root][data][a]", 1) in paths_with_values
-    assert ("[root][data][b]", 2) in paths_with_values
+    assert ("['root']['data']", data) in paths_with_values
+    assert ("['root']['data']['a']", 1) in paths_with_values
+    assert ("['root']['data']['b']", 2) in paths_with_values
 
 
 def test_dfs_map_path_consistency():
@@ -511,9 +511,9 @@ def test_dfs_map_path_consistency():
 
     # Check the paths are built up correctly in sequence
     assert path_sequence[0] == ""  # Root
-    assert path_sequence[1] == "[a]"
-    assert path_sequence[2] == "[a][b]"
-    assert path_sequence[3] == "[a][b][c]"
+    assert path_sequence[1] == "['a']"
+    assert path_sequence[2] == "['a']['b']"
+    assert path_sequence[3] == "['a']['b']['c']"
 
 
 def test_dfs_map_module_path():
@@ -538,7 +538,7 @@ def test_dfs_map_module_path():
     # Check paths for module attributes
     assert (".value", 1) in paths_with_values
     assert (".nested", {"a": 2}) in paths_with_values
-    assert (".nested[a]", 2) in paths_with_values
+    assert (".nested['a']", 2) in paths_with_values
 
 
 def test_dfs_map_refs_fun_circular_reference():
