@@ -12,19 +12,19 @@ from seli.core._serialize import (
 )
 
 
-class SimpleModule(Module, name="test.SimpleModule"):
+class SimpleModule(Module, name="test_serialize.SimpleModule"):
     def __init__(self, value, array):
         self.value = value
         self.array = array
 
 
-class NestedModule(Module, name="test.NestedModule"):
+class NestedModule(Module, name="test_serialize.NestedModule"):
     def __init__(self, simple_module, extra_value):
         self.simple_module = simple_module
         self.extra_value = extra_value
 
 
-class ComplexModule(Module, name="test.ComplexModule"):
+class ComplexModule(Module, name="test_serialize.ComplexModule"):
     def __init__(self):
         self.value = 42
         self.array = jnp.array([1, 2, 3])

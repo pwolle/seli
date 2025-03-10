@@ -8,14 +8,18 @@ from seli.core._module import Module
 T = TypeVar("T")
 P = ParamSpec("P")
 
+__all__ = [
+    "jit",
+]
+
 
 class Arguments(Module, name="builtin.Arguments"):
     """
     Wrapper for the arguments used to call a function.
     """
 
-    def __init__(self, *args, **kwargs):
-        self.args = args
+    def __init__(self, args, kwargs):
+        self.args = list(args)
         self.kwargs = kwargs
 
 
@@ -27,6 +31,9 @@ class Result(Module, name="builtin.Result"):
     value: Any
 
     def __init__(self, value: Any) -> None:
+        if isinstance(value, tuple):
+            value = list(value)
+
         self.value = value
 
 
@@ -36,7 +43,7 @@ def _apply_filter_jit(module: Arguments, function: Any) -> Any:
     return Result(result)
 
 
-def filter_jit(function: Callable[P, T]) -> Callable[P, T]:
+def jit(function: Callable[P, T]) -> Callable[P, T]:
     """
     Just-in-time compiling functions.
 

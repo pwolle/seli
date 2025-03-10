@@ -78,7 +78,7 @@ def test_dfs_map_mixed_structure():
 
 
 def test_dfs_map_with_module():
-    class TestModule(Module):
+    class TestModule(Module, name="test_module.TestModule"):
         def __init__(self):
             self.value = 1
 
@@ -219,7 +219,7 @@ def test_dfs_map_complex_nested_structure():
 
 
 def test_dfs_map_with_custom_module_attributes():
-    class CustomModule(Module):
+    class CustomModule(Module, name="test_module.CustomModule"):
         __slots__ = ["slot_attr"]
 
         def __init__(self):
@@ -244,11 +244,11 @@ def test_dfs_map_with_custom_module_attributes():
 
 
 def test_dfs_map_with_nested_modules():
-    class ChildModule(Module):
+    class ChildModule(Module, name="test_module.ChildModule"):
         def __init__(self):
             self.value = 1
 
-    class ParentModule(Module):
+    class ParentModule(Module, name="test_module.ParentModule"):
         def __init__(self):
             self.child = ChildModule()
             self.other_value = 2
@@ -517,7 +517,7 @@ def test_dfs_map_path_consistency():
 
 
 def test_dfs_map_module_path():
-    class TestModule(Module):
+    class TestModule(Module, name="test_module.TestModule"):
         def __init__(self):
             self.value = 1
             self.nested = {"a": 2}
@@ -608,7 +608,7 @@ def test_dfs_map_refs_fun_transformation():
 
 def test_dfs_map_refs_fun_with_modules():
     # Create a module with a reference to itself
-    class SelfReferencingModule(Module):
+    class SelfReferencingModule(Module, name="test_module.SelfReferencingModule"):
         def __init__(self):
             self.value = 5
             self.self_ref = None

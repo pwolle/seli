@@ -11,7 +11,7 @@ from seli.core._module import (
 )
 
 
-class _TestModuleClass(Module):
+class _TestModuleClass(Module, name="test_flatten.TestModuleClass"):
     def __init__(self):
         self.value = 1
         self.array = jnp.array([1, 2, 3])
@@ -19,7 +19,7 @@ class _TestModuleClass(Module):
         self.nested_module = _NestedModuleClass()
 
 
-class _NestedModuleClass(Module):
+class _NestedModuleClass(Module, name="test_flatten.NestedModuleClass"):
     def __init__(self):
         self.value = 2
         self.array = jnp.array([7, 8, 9])
@@ -139,7 +139,7 @@ def test_tree_flatten_unflatten_simple():
 
 
 def test_tree_flatten_unflatten_jax_jit():
-    class SimpleModule(Module):
+    class SimpleModule(Module, name="test_flatten.SimpleModule"):
         def __init__(self, x):
             self.weight = x
             self.bias = x * 2
@@ -156,7 +156,7 @@ def test_tree_flatten_unflatten_jax_jit():
 
 def test_tree_flatten_unflatten_complex():
     # Create a complex module with nested arrays
-    class ComplexModule(Module):
+    class ComplexModule(Module, name="test_flatten.ComplexModule"):
         def __init__(self):
             self.arrays = {
                 "a": jnp.array([1, 2, 3]),
@@ -166,7 +166,7 @@ def test_tree_flatten_unflatten_complex():
             self.nested = NestedModuleForComplex()
             self.value = "not an array"
 
-    class NestedModuleForComplex(Module):
+    class NestedModuleForComplex(Module, name="test_flatten.NestedModuleForComplex"):
         def __init__(self):
             self.value = 2
             self.array = jnp.array([7, 8, 9])
@@ -202,7 +202,7 @@ def test_tree_flatten_unflatten_complex():
 
 
 def test_tree_jit_shared_references():
-    class SharedModule(Module):
+    class SharedModule(Module, name="test_flatten.SharedModule"):
         def __init__(self, x):
             self.shared1 = {"key": x}
             self.shared2 = self.shared1
