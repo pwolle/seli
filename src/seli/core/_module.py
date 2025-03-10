@@ -29,6 +29,22 @@ __all__ = [
 
 @typecheck
 class Module(ModuleBase, name="builtin.Module"):
+    """
+    Base class for all modules. Modules can be used to implement parameterized
+    functions like neural networks.
+
+    Modules are PyTrees, which means they can be flattened and unflattened
+    using JAX's tree_util functions.
+
+    The flattening will automatically go through all attributes including slots.
+    Submodules as well as dictionaries, lists, and arrays will also be
+    recursively flattened.
+
+    If the module and its children do not contain arrays, the module supports
+    hashing and equality checking. These checks even respect the structure of
+    shared references.
+    """
+
     def __hash__(self):
         flat = flat_path_dict(self)
         return hash(tuple(flat.items()))
@@ -264,29 +280,34 @@ def dfs_map(
 
     Parameters
     ---
-    obj: The object to traverse, which can be a dictionary, list, Module,
-        or a leaf value.
+    obj: NodeType
+        The object to traverse, which can be a dictionary, list, Module, or a
+        leaf value.
         - Dictionaries must have string keys.
         - Lists are traversed in order.
         - Module objects have their attributes traversed alphabetically.
         - All other types are treated as leaf values.
 
-    fun: A transformation function to apply to each element in the structure.
+    fun: Callable[[PathKey, NodeType], NodeType]
+        A transformation function to apply to each element in the structure.
         The function should accept two arguments:
             - path: A PathKey object representing the current path
             - x: The current element being processed
         And return a transformed version of the element.
 
-    refs: Optional. A dictionary mapping object IDs to their transformed
+    refs: dict[int, NodeType] | None
+        A dictionary mapping object IDs to their transformed
         versions. Used internally to track already-processed objects and
         handle circular references. Default is None (an empty dict will be
         created).
 
-    path: Optional. A PathKey object representing the current path in the
-        structure. Used for tracking position during recursive calls.
-        Default is None (an empty PathKey will be created).
+    path: PathKey | None
+        A PathKey object representing the current path in the structure. Used
+        for tracking position during recursive calls. Default is None (an empty
+        PathKey will be created).
 
-    refs_fun: Optional. A function to handle repeated references.
+    refs_fun: Callable[[PathKey, NodeType], NodeType] | None
+        A function to handle repeated references.
         When an object is encountered multiple times during traversal:
             - If refs_fun is None, the already-processed version is
                 returned directly.
@@ -539,6 +560,32 @@ def flat_path_dict(obj: NodeType):
 
 
 def node_repr(obj: NodeType, /, indent: str = " " * 4) -> str:
+    """
+    Generate a structured, readable string representation of nested objects.
+
+    Creates a hierarchical string representation of Module objects and other
+    complex nested structures with appropriate indentation. The function handles
+    various types differently:
+
+    - JAX arrays: Summarized using `array_summary`
+    - PathKey objects: Displayed with their string representation
+    - Lists: Formatted with each item on a new indented line
+    - Dictionaries: Formatted with key-value pairs on indented lines
+    - Module objects: Displayed with class name and attribute values
+    - Other types: Using their native repr() representation
+
+    Parameters
+    ---
+    obj : NodeType
+        The object to represent as a string
+    indent : str, default="    "
+        The indentation string used for nested levels
+
+    Returns
+    ---
+    str
+        A formatted string representation of the object
+    """
     obj = to_tree(obj)
 
     if isinstance(obj, jax.Array):

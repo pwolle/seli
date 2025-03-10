@@ -35,6 +35,13 @@ REGISTRY_INVERSE: dict[Hashable, str] = {}
 
 @typecheck
 class ModuleBase:
+    """
+    Base class for the Module class, all modules that inherit from this class,
+    will be registered as Jax PyTree nodes and can be serialized and added to
+    the global registry, such that they can be serialized and deserialized
+    later.
+    """
+
     def __init_subclass__(
         cls,
         name: str | None = None,
@@ -50,29 +57,51 @@ class ModuleBase:
 @typecheck
 def registry_add(
     name: str,
-    module: type,
+    value: Any,
     overwrite: bool = False,
 ) -> None:
+    """
+    Add a something to the registry. Everything that is added to the registry
+    can be serialized and deserialized later.
+
+    Parameters
+    ---
+    name: str
+        The name of the module to register.
+
+    value: Any
+        The value to register.
+
+    overwrite: bool
+        If True, overwrite the existing value if it is already registered.
+    """
+
     if not overwrite and name in REGISTRY:
-        if REGISTRY[name] is module:
+        if REGISTRY[name] is value:
             return
 
-        msg = f"Module {name} already registered, skipping {module} ({type(module)})"
+        msg = f"Module {name} already registered, skipping {value} ({type(value)})"
         msg += f" already registered as {REGISTRY[name]} ({type(REGISTRY[name])})"
         logger.warning(msg)
         return
 
-    REGISTRY[name] = module
-    REGISTRY_INVERSE[module] = name
+    REGISTRY[name] = value
+    REGISTRY_INVERSE[value] = name
 
 
 @typecheck
 def registry_str(obj: Any) -> str:
+    """
+    Get the registry string for an object.
+    """
     return f"__registry__:{REGISTRY_INVERSE[obj]}"
 
 
 @typecheck
 def registry_obj(name: str) -> Hashable:
+    """
+    Get the object for a registry string.
+    """
     if not is_registry_str(name):
         raise ValueError(f"Invalid registry string: {name}")
 
@@ -86,6 +115,9 @@ def registry_obj(name: str) -> Hashable:
 
 @typecheck
 def is_registry_str(obj: Any) -> bool:
+    """
+    Check if an object is a registry string.
+    """
     return isinstance(obj, str) and obj.startswith("__registry__:")
 
 

@@ -38,6 +38,10 @@ __all__ = [
 
 @typecheck
 class ArrayPlaceholder(Module, name="builtin.ArrayPlaceholder"):
+    """
+    Placeholder for an array that will be serialized and deserialized later.
+    """
+
     index: int
 
     def __init__(self, index: int):
@@ -46,6 +50,28 @@ class ArrayPlaceholder(Module, name="builtin.ArrayPlaceholder"):
 
 @typecheck
 def to_arrays_and_json(obj: NodeType) -> tuple[list[jax.Array], str]:
+    """
+    Serialize a nested structure of modules and arrays and other containers
+    to a JSON string and a list of arrays.
+
+    This works by traversing the nested structure and replacing arrays with
+    ArrayPlaceholder objects. The ArrayPlaceholder objects are then replaced
+    with the actual arrays during deserialization.
+
+    Then the Modules are replaced with dictionaries containing the module
+    class and all its attributes. The class is stored as "__class__" in the
+    dictionary and turned into a string using the registry.
+
+    Parameters
+    ---
+    obj: NodeType
+        The nested structure to serialize.
+
+    Returns
+    ---
+    tuple[list[jax.Array], str]
+        A tuple containing a list of arrays and a JSON string.
+    """
     arrays = []
 
     def fun_arrays(_: PathKey, x: NodeType):
@@ -92,6 +118,24 @@ def to_arrays_and_json(obj: NodeType) -> tuple[list[jax.Array], str]:
 
 @typecheck
 def from_arrays_and_json(arrays: list[jax.Array], obj_json: str) -> NodeType:
+    """
+    Deserialize a nested structure of modules and arrays and other containers
+    from a JSON string and a list of arrays. Inverse of `to_arrays_and_json`.
+
+    Parameters
+    ---
+    arrays: list[jax.Array]
+        The list of arrays to deserialize.
+
+    obj_json: str
+        The JSON string to deserialize.
+
+    Returns
+    ---
+    NodeType
+        The deserialized nested structure.
+    """
+
     def fun_registry(_: PathKey, x: NodeType):
         if is_registry_str(x):
             return registry_obj(x)
@@ -130,6 +174,22 @@ def from_arrays_and_json(arrays: list[jax.Array], obj_json: str) -> NodeType:
 
 @typecheck
 def save(path: str | Path, obj: NodeType) -> None:
+    """
+    Save a nested structure of modules and arrays and other containers to a
+    file. All leaves of the nested structure must be serializable, i.e.
+    standard json serializable objects, or part of the registry. All modules
+    must be registered, i.e. their type is in the registry. Modules can be
+    registered by specifying the `name` parameter when inheriting from
+    `Module`.
+
+    Parameters
+    ---
+    path: str | Path
+        The path to save the serialized object to.
+
+    obj: NodeType
+        The nested structure to serialize.
+    """
     arrays, obj_json = to_arrays_and_json(obj)
     arrays.append(obj_json)
     jnp.savez(path, *arrays)
@@ -137,6 +197,20 @@ def save(path: str | Path, obj: NodeType) -> None:
 
 @typecheck
 def load(path: str | Path) -> NodeType:
+    """
+    Load a nested structure of modules and arrays and other containers from a
+    file. Inverse of `save`.
+
+    Parameters
+    ---
+    path: str | Path
+        The path to load the serialized object from.
+
+    Returns
+    ---
+    NodeType
+        The deserialized nested structure.
+    """
     arrays = list(jnp.load(path).values())
 
     # pop the last element, which is the json string
