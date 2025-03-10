@@ -60,7 +60,7 @@ class Module(ModuleBase, name="builtin.Module"):
     def tree_unflatten(
         cls: type[Self],
         aux_data: tuple[list["PathKey"], "NodeType"],
-        arrs_vals: Sequence[jax.Array],
+        arrs_vals: Sequence[jax.Array | jax.ShapeDtypeStruct],
     ) -> Self:
         arrs_keys, tree = aux_data
         obj = to_tree_inverse(tree)
@@ -74,7 +74,9 @@ class Module(ModuleBase, name="builtin.Module"):
         return node_repr(self)
 
 
-LeafType: TypeAlias = None | bool | int | float | str | type | jax.Array
+LeafType: TypeAlias = (
+    None | bool | int | float | str | type | jax.Array | jax.ShapeDtypeStruct
+)
 DeepType: TypeAlias = list | dict | Module
 NodeType: TypeAlias = LeafType | DeepType | Any
 

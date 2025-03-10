@@ -10,6 +10,6 @@ def dtype_summary(dtype: jax.numpy.dtype, /) -> str:
 
 
 def array_summary(x: jax.Array, /) -> str:
-    shape = " ".join(str(d) for d in x.shape)
+    shape = "×".join(str(d) for d in x.shape)
     dtype = dtype_summary(x.dtype)
     return f"{dtype}[{shape}]"

@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Any, Literal
+from typing import Literal
 
 import jax
 import jax.numpy as jnp
@@ -15,23 +15,22 @@ class Initializer(Module, "initializers.Initializer"):
         self,
         key: PRNGKeyArray,
         shape: Sequence[int],
-        dtype: DTypeLike = jnp.float32,
-        **_: Any,
     ) -> jax.Array:
         raise NotImplementedError("Initializers must be implemented")
 
 
+@typecheck
 class Zeros(Initializer, "initializers.Zeros"):
     def __call__(
         self,
         key: PRNGKeyArray,
         shape: Sequence[int],
         dtype: DTypeLike = jnp.float32,
-        scale: float = 1.0,
     ) -> jax.Array:
         return jnp.zeros(shape, dtype)
 
 
+@typecheck
 class Ones(Initializer, "initializers.Ones"):
     def __call__(
         self,
@@ -52,15 +51,25 @@ class Normal(Initializer, "initializers.Normal"):
     - Glorot & Bengio (2010): https://proceedings.mlr.press/v9/glorot10a.html
     """
 
+    def __init__(
+        self,
+        scale: float | Literal["He", "Glorot"] | None = None,
+    ):
+        self.scale = scale
+
     def __call__(
         self,
         key: PRNGKeyArray,
         shape: Sequence[int],
         dtype: DTypeLike = jnp.float32,
-        scale: float | Literal["He", "Glorot"] | None = None,
     ) -> jax.Array:
-        if len(shape) == 2 and scale is None:
-            scale = "He"
+        if self.scale is None:
+            if len(shape) == 2:
+                scale = "He"
+            else:
+                scale = 1.0
+        else:
+            scale = self.scale
 
         w = jrn.normal(key, shape, dtype)
 
@@ -76,6 +85,7 @@ class Normal(Initializer, "initializers.Normal"):
         return w * scale
 
 
+@typecheck
 class Uniform(Initializer, "initializers.Uniform"):
     """
     Initialize weights from a uniform distribution. Weights can be scaled by
@@ -85,15 +95,25 @@ class Uniform(Initializer, "initializers.Uniform"):
     - Glorot & Bengio (2010): https://proceedings.mlr.press/v9/glorot10a.html
     """
 
+    def __init__(
+        self,
+        scale: float | Literal["He", "Glorot", "Xavier"] | None = None,
+    ):
+        self.scale = scale
+
     def __call__(
         self,
         key: PRNGKeyArray,
         shape: Sequence[int],
         dtype: DTypeLike = jnp.float32,
-        scale: float | Literal["He", "Glorot", "Xavier"] | None = None,
     ) -> jax.Array:
-        if len(shape) == 2 and scale is None:
-            scale = "He"
+        if self.scale is None:
+            if len(shape) == 2:
+                scale = "He"
+            else:
+                scale = 1.0
+        else:
+            scale = self.scale
 
         w = jrn.uniform(key, shape, dtype, minval=-1, maxval=1)
 
