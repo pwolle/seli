@@ -12,6 +12,8 @@ import logging
 from collections.abc import Hashable
 from typing import Any
 
+import jax.nn as jnn
+import jax.numpy as jnp
 import jax.tree_util as jtu
 
 from seli.core._typecheck import typecheck
@@ -85,3 +87,49 @@ def registry_obj(name: str) -> Hashable:
 @typecheck
 def is_registry_str(obj: Any) -> bool:
     return isinstance(obj, str) and obj.startswith("__registry__:")
+
+
+# make common activation functions serializable
+registry_add("jax.nn.celu", jnn.celu)
+registry_add("jax.nn.elu", jnn.elu)
+registry_add("jax.nn.gelu", jnn.gelu)
+registry_add("jax.nn.glu", jnn.glu)
+registry_add("jax.nn.hard_sigmoid", jnn.hard_sigmoid)
+registry_add("jax.nn.hard_silu", jnn.hard_silu)
+registry_add("jax.nn.hard_swish", jnn.hard_swish)
+registry_add("jax.nn.hard_tanh", jnn.hard_tanh)
+registry_add("jax.nn.leaky_relu", jnn.leaky_relu)
+registry_add("jax.nn.log_sigmoid", jnn.log_sigmoid)
+registry_add("jax.nn.log_softmax", jnn.log_softmax)
+registry_add("jax.nn.logsumexp", jnn.logsumexp)
+registry_add("jax.nn.standardize", jnn.standardize)
+registry_add("jax.nn.relu", jnn.relu)
+registry_add("jax.nn.relu6", jnn.relu6)
+registry_add("jax.nn.selu", jnn.selu)
+registry_add("jax.nn.sigmoid", jnn.sigmoid)
+registry_add("jax.nn.soft_sign", jnn.soft_sign)
+registry_add("jax.nn.softmax", jnn.softmax)
+registry_add("jax.nn.softplus", jnn.softplus)
+registry_add("jax.nn.sparse_plus", jnn.sparse_plus)
+registry_add("jax.nn.sparse_sigmoid", jnn.sparse_sigmoid)
+registry_add("jax.nn.silu", jnn.silu)
+registry_add("jax.nn.swish", jnn.swish)
+registry_add("jax.nn.squareplus", jnn.squareplus)
+registry_add("jax.nn.mish", jnn.mish)
+
+# make the jax data types serializable
+registry_add("jax.numpy.bool_", jnp.bool_)
+registry_add("jax.numpy.complex64", jnp.complex64)
+registry_add("jax.numpy.complex128", jnp.complex128)
+registry_add("jax.numpy.float16", jnp.float16)
+registry_add("jax.numpy.float32", jnp.float32)
+registry_add("jax.numpy.float64", jnp.float64)
+registry_add("jax.numpy.bfloat16", jnp.bfloat16)
+registry_add("jax.numpy.int8", jnp.int8)
+registry_add("jax.numpy.int16", jnp.int16)
+registry_add("jax.numpy.int32", jnp.int32)
+registry_add("jax.numpy.int64", jnp.int64)
+registry_add("jax.numpy.uint8", jnp.uint8)
+registry_add("jax.numpy.uint16", jnp.uint16)
+registry_add("jax.numpy.uint32", jnp.uint32)
+registry_add("jax.numpy.uint64", jnp.uint64)
