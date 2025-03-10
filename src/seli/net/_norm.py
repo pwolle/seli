@@ -35,7 +35,7 @@ class LayerNorm(Module, name="net.LayerNorm"):
     def __init__(
         self,
         eps: float = 1e-6,
-        offset: float = 1,
+        offset: float | int = 1,
     ) -> None:
         self.eps = eps
         self.offset = offset
@@ -89,7 +89,7 @@ class RMSNorm(Module, name="net.RMSNorm"):
     def __init__(
         self,
         eps: float = 1e-6,
-        offset: float = 1,
+        offset: float | int = 1,
     ) -> None:
         self.eps = eps
         self.offset = offset
