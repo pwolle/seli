@@ -31,3 +31,23 @@ class Jit(Module, Generic[P, T], name="net.Jit"):
 
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> T:
         return _filter_jit_apply(self.module, *args, **kwargs)
+
+
+class Partial(Module, Generic[T], name="net.Partial"):
+    """
+    Fix parts of the arguments of a callable module. Can be used in a similar
+    manner to `functools.partial`.
+    """
+
+    def __init__(
+        self,
+        module: Callable[..., T],
+        *args,
+        **kwargs,
+    ):
+        self.func = module
+        self.args = args
+        self.kwargs = kwargs
+
+    def __call__(self, *args, **kwargs) -> T:
+        return self.func(*self.args, *args, **{**self.kwargs, **kwargs})
