@@ -15,8 +15,7 @@ def dtype_summary(dtype: jax.numpy.dtype, /) -> str:
 
 def array_summary(x: jax.Array, /) -> str:
     """
-    Compress the array to a short string string, e.g. float32[1,2,3] becomes
-    f32[1×2×3].
+    Compress the array to a short string string.
     """
     shape = "×".join(str(d) for d in x.shape)
     dtype = dtype_summary(x.dtype)
