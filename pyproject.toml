@@ -20,6 +20,8 @@ requires-python = ">=3.11"
 dependencies = [
     "jax>=0.4.25",
     "beartype>=0.20.0",
+    "jaxtyping>=0.2.38",
+    "einops>=0.8.1",
 ]
 
 [project.optional-dependencies]
