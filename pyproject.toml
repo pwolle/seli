@@ -68,7 +68,7 @@ target-version = "py38"
 [tool.ruff.lint]
 # Enable flake8-bugbear (`B`) rules.
 select = ["E", "F", "B", "I"]
-ignore = []
+ignore = ["F722"]
 
 # Allow fix for all enabled rules.
 fixable = ["ALL"]
