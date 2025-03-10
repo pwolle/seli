@@ -102,7 +102,12 @@ class DotProductAttention(Module, name="net.DotProductAttention"):
 
         assert dim % heads_q == 0
         assert dim % heads_k == 0
-        assert heads_k % heads_q == 0
+
+        # JAX requires that query heads must be a multiple of key heads
+        assert heads_q % heads_k == 0, (
+            f"The number of query heads ({heads_q}) must be a multiple "
+            f"of the number of key/value heads ({heads_k})."
+        )
 
         self.dim = dim
         self.dim_head = dim // heads_q
@@ -207,7 +212,12 @@ class CrossAttention(Module, name="net.CrossAttention"):
 
         assert dim % heads_q == 0
         assert dim % heads_k == 0
-        assert heads_k % heads_q == 0
+
+        # JAX requires that query heads must be a multiple of key heads
+        assert heads_q % heads_k == 0, (
+            f"The number of query heads ({heads_q}) must be a multiple "
+            f"of the number of key/value heads ({heads_k})."
+        )
 
         self.dim = dim
         self.dim_head = dim // heads_q
