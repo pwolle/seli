@@ -6,7 +6,8 @@ import jax.numpy as jnp
 import jax.random as jrn
 from jaxtyping import Array, Float, PRNGKeyArray, jaxtyped
 
-from seli import Module, typecheck
+from seli.core._module import Module
+from seli.core._typecheck import typecheck
 
 __all__ = [
     "Linear",

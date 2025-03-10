@@ -8,7 +8,8 @@ import jax.nn as jnn
 import jax.numpy as jnp
 from jaxtyping import Array, Float, PRNGKeyArray, jaxtyped
 
-from seli import Module, typecheck
+from seli.core._module import Module
+from seli.core._typecheck import typecheck
 from seli.net._linear import Linear
 
 __all__ = [

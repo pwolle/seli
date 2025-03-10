@@ -6,7 +6,8 @@ from typing import Literal
 
 import einops
 
-from seli import Module, typecheck
+from seli.core._module import Module
+from seli.core._typecheck import typecheck
 
 __all__ = [
     "Rearrange",

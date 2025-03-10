@@ -6,7 +6,8 @@ import jax.lax as lax
 import jax.numpy as jnp
 from jaxtyping import Array, Float, jaxtyped
 
-from seli import Module, typecheck
+from seli.core._module import Module
+from seli.core._typecheck import typecheck
 
 __all__ = [
     "LayerNorm",
