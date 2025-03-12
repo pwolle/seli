@@ -58,7 +58,7 @@ def set_keys(
     provided only keys in the given collection will be initialized.
 
     Parameters
-    ----------
+    ---
     module: NodeType
         The module to initialize the keys for.
 
@@ -69,7 +69,7 @@ def set_keys(
         The collection to initialize the keys for.
 
     Returns
-    -------
+    ---
     module: NodeType
         The module with the keys initialized.
     """

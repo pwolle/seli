@@ -106,7 +106,22 @@ class TruncatedNormal(Initializer, name="net.init.TruncatedNormal"):
 
 class Normal(Initializer, name="net.init.Normal"):
     """
-    Initializes values from a normal distribution.
+    Initializes values from a normal distribution. The following automatic
+    scaling methods are supported:
+
+    - Glorot, X., & Bengio, Y. (2010). "Understanding the difficulty of
+      training deep feedforward neural networks."
+      In *Proceedings of the Thirteenth International Conference on Artificial
+      Intelligence and Statistics* (pp. 249-256). JMLR.org.
+
+    - He, K., Zhang, X., Ren, S., & Sun, J. (2015). "Delving deep into
+      rectifiers: Surpassing human-level performance on ImageNet
+      classification."
+
+    - LeCun, Y., Bottou, L., Orr, G. B., & Müller, K. R. (1998). "Efficient
+      backprop."
+
+    The default is He, the same as in PyTorch.
     """
 
     def __init__(
@@ -152,7 +167,22 @@ class Normal(Initializer, name="net.init.Normal"):
 
 class Uniform(Initializer, name="net.init.Uniform"):
     """
-    Initializes values from a uniform distribution.
+    Initializes values from a uniform distribution. The following automatic
+    scaling methods are supported:
+
+    - Glorot, X., & Bengio, Y. (2010). "Understanding the difficulty of
+      training deep feedforward neural networks."
+      In *Proceedings of the Thirteenth International Conference on Artificial
+      Intelligence and Statistics* (pp. 249-256). JMLR.org.
+
+    - He, K., Zhang, X., Ren, S., & Sun, J. (2015). "Delving deep into
+      rectifiers: Surpassing human-level performance on ImageNet
+      classification."
+
+    - LeCun, Y., Bottou, L., Orr, G. B., & Müller, K. R. (1998). "Efficient
+      backprop."
+
+    The default is He, the same as in PyTorch.
     """
 
     def __init__(
