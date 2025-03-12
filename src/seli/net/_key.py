@@ -1,7 +1,7 @@
 from jax import random as jrn
 from jaxtyping import PRNGKeyArray
 
-from seli.core._module import Module, NodeType, dfs_map
+from seli.core._module import Module, NodeType, PathKey, dfs_map
 
 __all__ = [
     "Key",
@@ -78,21 +78,22 @@ def set_keys(
 
     assert isinstance(key_or_seed, PRNGKeyArray)
 
-    keys_in_module = []
+    keys_in_module: list[PathKey] = []
 
-    def fun(_, node):
-        if isinstance(node, Key) and node.initialized:
+    def fun(path: PathKey, node: NodeType):
+        if isinstance(node, Key) and not node.initialized:
             if collection is None or node.collection in collection:
-                keys_in_module.append(node)
+                keys_in_module.append(path)
 
-        return
+        return node
 
     module = dfs_map(module, fun)
 
-    for key, key_module in zip(
+    for key, path in zip(
         jrn.split(key_or_seed, len(keys_in_module)),
         keys_in_module,
     ):
+        key_module = path.get(module)
         key_module._key = key
 
     return module
