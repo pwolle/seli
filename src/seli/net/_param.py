@@ -1,12 +1,12 @@
 from typing import Generic, TypeVar
 
-import jax
+from jax import Array
 from jax.typing import DTypeLike
 from jaxtyping import PRNGKeyArray
 
 from seli._env import DEFAULT_FLOAT
 from seli.core._module import Module
-from seli.net._init import Initializer
+from seli.net._init import Init
 from seli.net._key import Key
 
 __all__ = [
@@ -14,27 +14,41 @@ __all__ = [
 ]
 
 # make generic to differentiate between initialized and uninitialized
-V = TypeVar("V", bound=jax.Array | None)
+# at type inference time
+V = TypeVar("V", bound=Array | None)
 
 
 class Param(Module, Generic[V], name="net.Param"):
+    """
+    Organizes a parameter
+    """
+
     value: V
+
+    init: Init | None
+    rngs: Key
 
     def __init__(
         self,
-        init: Initializer,
         *,
-        key: PRNGKeyArray | None = None,
-        collection: str | None = None,
-    ):
+        init: Init,
+        rngs: PRNGKeyArray | None = None,
+        collection: str | None = "param",
+    ) -> None:
         self.init = init
-        self.key = Key(key, collection)
-
         self.value = None
 
-    @property
-    def collection(self) -> str | None:
-        return self.key.collection
+        self.collection = collection
+        self.rngs = Key(rngs, "init")
+
+    @classmethod
+    def from_value(
+        cls,
+        value: Array,
+        *,
+        collection: str | None = "param",
+    ) -> "Param[Array]":
+        return cls(init=None, data=value, collection=collection)
 
     @property
     def initialized(self) -> bool:
@@ -44,13 +58,14 @@ class Param(Module, Generic[V], name="net.Param"):
         self,
         shape: tuple[int, ...],
         dtype: DTypeLike = DEFAULT_FLOAT,
-    ) -> jax.Array:
+    ) -> Array:
         if not self.initialized:
-            if not self.key.initialized:
+            if not self.rngs.initialized:
                 error = "Key has not been set"
                 raise ValueError(error)
 
-            self.value = self.init(self.key.key, shape, dtype)
+            assert self.init is not None, "Init or value was changed to None?"
+            self.value = self.init(self.rngs.key, shape, dtype)
 
         if self.value.shape != shape:
             error = f"Expected shape {shape}, got {self.value.shape}"
