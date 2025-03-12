@@ -78,7 +78,7 @@ The documentation will be available in `docs/_build/html`.
 - [x] Serialize
 - [x] Module repr
 - [x] Layers
-- [ ] Filter jit and filter grad
+- [x] Filter jit and filter grad
 - [ ] Optimizer
 - [ ] Dataloader
 - [ ] Supervised examples
