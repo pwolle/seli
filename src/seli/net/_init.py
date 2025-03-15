@@ -11,6 +11,7 @@ from seli.core._module import Module
 __all__ = [
     "Init",
     "Zeros",
+    "Ones",
     "Constant",
     "TruncatedNormal",
     "Normal",
@@ -49,6 +50,20 @@ class Zeros(Init, name="net.init.Zeros"):
         dtype: DTypeLike,
     ) -> jax.Array:
         return jnp.zeros(shape, dtype)
+
+
+class Ones(Init, name="net.init.Ones"):
+    """
+    Initializes all values to one.
+    """
+
+    def __call__(
+        self,
+        key: PRNGKeyArray,
+        shape: tuple[int, ...],
+        dtype: DTypeLike,
+    ) -> jax.Array:
+        return jnp.ones(shape, dtype)
 
 
 class Constant(Init, name="net.init.Constant"):

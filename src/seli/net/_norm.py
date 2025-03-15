@@ -3,11 +3,12 @@ Normalization layers.
 """
 
 import jax.lax as lax
-import jax.numpy as jnp
 from jaxtyping import Array, Float, jaxtyped
 
 from seli.core._module import Module
 from seli.core._typecheck import typecheck
+from seli.net._init import Ones, Zeros
+from seli.net._param import Param
 
 __all__ = [
     "LayerNorm",
@@ -40,23 +41,16 @@ class LayerNorm(Module, name="net.LayerNorm"):
         self.eps = eps
         self.offset = offset
 
-        self.weight = None
-        self.bias = None
-
-    def _build(self, x) -> None:
-        self.weight = jnp.zeros(x.shape[-1], dtype=x.dtype)
-        self.bias = jnp.zeros(x.shape[-1], dtype=x.dtype)
+        self.weight = Param(init=Zeros())
+        self.bias = Param(init=Zeros())
 
     @jaxtyped(typechecker=typecheck)
     def __call__(
         self,
         x: Float[Array, "*batch dim"],
     ) -> Float[Array, "*batch dim"]:
-        if self.weight is None or self.bias is None:
-            self._build(x)
-
-        assert self.weight is not None
-        assert self.bias is not None
+        w = self.weight((x.shape[-1],), x.dtype)
+        b = self.bias((x.shape[-1],), x.dtype)
 
         m = x.mean(axis=-1, keepdims=True)
         x = x - m
@@ -65,8 +59,8 @@ class LayerNorm(Module, name="net.LayerNorm"):
         r = lax.rsqrt(v + self.eps)
         x = x * r
 
-        x = x * (self.weight + self.offset)
-        x = x + self.bias
+        x = x * (w + self.offset)
+        x = x + b
         return x
 
 
@@ -94,28 +88,21 @@ class RMSNorm(Module, name="net.RMSNorm"):
         self.eps = eps
         self.offset = offset
 
-        self.weight = None
-        self.bias = None
-
-    def _build(self, x) -> None:
-        self.weight = jnp.ones(x.shape[-1], dtype=x.dtype)
-        self.bias = jnp.zeros(x.shape[-1], dtype=x.dtype)
+        self.weight = Param(init=Ones())
+        self.bias = Param(init=Zeros())
 
     @jaxtyped(typechecker=typecheck)
     def __call__(
         self,
         x: Float[Array, "*batch dim"],
     ) -> Float[Array, "*batch dim"]:
-        if self.weight is None or self.bias is None:
-            self._build(x)
-
-        assert self.weight is not None
-        assert self.bias is not None
+        w = self.weight((x.shape[-1],), x.dtype)
+        b = self.bias((x.shape[-1],), x.dtype)
 
         v = (x * x).mean(axis=-1, keepdims=True)
         r = lax.rsqrt(v + self.eps)
         x = x * r
 
-        x = x * (self.weight + self.offset)
-        x = x + self.bias
+        x = x * (w + self.offset)
+        x = x + b
         return x
