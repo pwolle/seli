@@ -4,19 +4,19 @@ from jaxtyping import PRNGKeyArray
 from seli.core._module import Module, NodeType, PathKey, dfs_map
 
 __all__ = [
-    "Key",
-    "set_keys",
+    "RNGs",
+    "set_rngs",
 ]
 
 
-class Key(Module, name="net.Key"):
+class RNGs(Module, name="net.Key"):
     """
     Placeholder for a Jax PRNG key. The class does not need to be initialized
     with a key directly, but can be used to indicate a spot in a module which
     needs to be filled with a key later.
 
-    All key submodules can be initialized with a key later by calling
-    `set_keys` with a PRNG key or an integer seed.
+    All rngs submodules can be initialized with a key later by calling
+    `set_rngs` with a PRNG key or an integer seed.
 
     The collections attribute can be used to group keys, for example when
     initializing the same module on different devices the keys for the
@@ -48,13 +48,13 @@ class Key(Module, name="net.Key"):
         return key
 
 
-def set_keys(
+def set_rngs(
     module: NodeType,
     key_or_seed: PRNGKeyArray | int,
     collection: list[str] | None = None,
 ):
     """
-    Initialize all Key submodules in the given module. If a collection is
+    Initialize all RNGs submodules in the given module. If a collection is
     provided only keys in the given collection will be initialized.
 
     Parameters
@@ -81,7 +81,7 @@ def set_keys(
     keys_in_module: list[PathKey] = []
 
     def fun(path: PathKey, node: NodeType):
-        if isinstance(node, Key) and not node.initialized:
+        if isinstance(node, RNGs) and not node.initialized:
             if collection is None or node.collection in collection:
                 keys_in_module.append(path)
 
@@ -94,6 +94,8 @@ def set_keys(
         keys_in_module,
     ):
         key_module = path.get(module)
+
+        assert isinstance(key_module, RNGs)
         key_module._key = key
 
     return module

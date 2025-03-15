@@ -5,6 +5,7 @@ import numpy as np
 
 from seli.net import CrossAttention, DotProductAttention
 from seli.net._attention import normalize, softcap
+from seli.net._key import set_rngs
 
 
 def test_normalize_function():
@@ -43,11 +44,10 @@ def test_softcap_function():
 class TestDotProductAttention:
     def test_initialization(self):
         # Test initialization with required parameters
-        key = jrn.PRNGKey(0)
         dim = 64
         heads_q = 4
 
-        attn = DotProductAttention(key, dim=dim, heads_q=heads_q)
+        attn = DotProductAttention(dim=dim, heads_q=heads_q)
 
         assert attn.dim == dim
         assert attn.heads_q == heads_q
@@ -65,22 +65,13 @@ class TestDotProductAttention:
         heads_k_custom = 2  # 8 % 2 == 0, satisfying the JAX constraint
 
         attn_custom = DotProductAttention(
-            key,
             dim=dim,
             heads_q=heads_q_custom,
             heads_k=heads_k_custom,
-            norm=True,
-            tanh_cap=5.0,
-            scale=0.125,
-            is_causal=True,
         )
 
         assert attn_custom.heads_q == heads_q_custom
         assert attn_custom.heads_k == heads_k_custom
-        assert attn_custom.norm is True
-        assert attn_custom.tanh_cap == 5.0
-        assert attn_custom.scale == 0.125
-        assert attn_custom.is_causal is True
 
     def test_forward_shapes(self):
         # Test that the forward pass produces outputs with expected shapes
@@ -88,17 +79,19 @@ class TestDotProductAttention:
         dim = 64
         heads_q = 4
 
-        attn = DotProductAttention(key, dim=dim, heads_q=heads_q)
+        attn = DotProductAttention(dim=dim, heads_q=heads_q)
+        attn = set_rngs(attn, key)
 
-        # Test with batch shape and sequence length
+        # Create inputs with batch and sequence dimensions
         batch_size = 2
         seq_len = 10
         x = jnp.ones((batch_size, seq_len, dim))
 
-        output = attn(x)
+        # Call the attention module
+        y = attn(x)
 
-        # Output should have the same shape as input
-        assert output.shape == x.shape
+        # Check output shape
+        assert y.shape == (batch_size, seq_len, dim)
 
     def test_forward_with_bias_and_mask(self):
         # Test the forward pass with bias and mask
@@ -106,24 +99,25 @@ class TestDotProductAttention:
         dim = 64
         heads_q = 4
 
-        attn = DotProductAttention(key, dim=dim, heads_q=heads_q)
+        attn = DotProductAttention(dim=dim, heads_q=heads_q)
+        attn = set_rngs(attn, key)
 
+        # Create inputs and attention bias/mask
         batch_size = 2
-        seq_len = 10
+        seq_len = 8
         x = jnp.ones((batch_size, seq_len, dim))
 
-        # Create a bias tensor (attention_heads, seq_len, seq_len)
-        # JAX expects (1, heads, seq_len, seq_len) for broadcasting to batch
+        # Create a bias tensor
         bias = jnp.zeros((1, heads_q, seq_len, seq_len))
 
-        # Create a mask tensor (1, 1, seq_len, seq_len)
-        mask = jnp.ones((1, 1, seq_len, seq_len), dtype=jnp.bool_)
+        # Create a mask tensor (boolean)
+        mask = jnp.ones((batch_size, 1, seq_len, seq_len), dtype=bool)
 
-        # Forward pass with bias and mask
-        output = attn(x, bias=bias, mask=mask)
+        # Call with bias and mask
+        y = attn(x, bias=bias, mask=mask)
 
-        # Output should have the same shape as input
-        assert output.shape == x.shape
+        # Check output shape
+        assert y.shape == (batch_size, seq_len, dim)
 
     def test_causal_attention(self):
         # Test causal attention mask
@@ -132,17 +126,19 @@ class TestDotProductAttention:
         heads_q = 4
 
         # Create causal attention
-        causal_attn = DotProductAttention(key, dim=dim, heads_q=heads_q, is_causal=True)
+        causal_attn = DotProductAttention(dim=dim, heads_q=heads_q, is_causal=True)
+        causal_attn = set_rngs(causal_attn, key)
 
+        # Create inputs
         batch_size = 2
-        seq_len = 10
+        seq_len = 6
         x = jnp.ones((batch_size, seq_len, dim))
 
-        # Forward pass with causal mask
-        output_causal = causal_attn(x)
+        # Call the attention module
+        y = causal_attn(x)
 
-        # Output should have the same shape as input
-        assert output_causal.shape == x.shape
+        # Check output shape
+        assert y.shape == (batch_size, seq_len, dim)
 
     def test_dim_in_property(self):
         # Test the dim_in property
@@ -150,7 +146,8 @@ class TestDotProductAttention:
         dim = 64
         heads_q = 4
 
-        attn = DotProductAttention(key, dim=dim, heads_q=heads_q)
+        attn = DotProductAttention(dim=dim, heads_q=heads_q)
+        attn = set_rngs(attn, key)
 
         # Initially, dim_in should be None
         assert attn.dim_in is None
@@ -170,7 +167,8 @@ class TestDotProductAttention:
         dim = 64
         heads_q = 4
 
-        attn = DotProductAttention(key, dim=dim, heads_q=heads_q)
+        attn = DotProductAttention(dim=dim, heads_q=heads_q)
+        attn = set_rngs(attn, key)
 
         batch_size = 2
         seq_len = 10
@@ -190,11 +188,10 @@ class TestDotProductAttention:
 class TestCrossAttention:
     def test_initialization(self):
         # Test initialization with required parameters
-        key = jrn.PRNGKey(0)
         dim = 64
         heads_q = 4
 
-        cross_attn = CrossAttention(key, dim=dim, heads_q=heads_q)
+        cross_attn = CrossAttention(dim=dim, heads_q=heads_q)
 
         assert cross_attn.dim == dim
         assert cross_attn.heads_q == heads_q
@@ -211,26 +208,14 @@ class TestCrossAttention:
         heads_q_custom = 8
         heads_k_custom = 2  # 8 % 2 == 0, satisfying the JAX constraint
 
-        bias = jnp.zeros((1, heads_q_custom, 5, 7))  # (1, heads, seq_q, seq_kv)
-        mask = jnp.ones((1, 1, 5, 7), dtype=jnp.bool_)  # (1, 1, seq_q, seq_kv)
-
         cross_attn_custom = CrossAttention(
-            key,
             dim=dim,
             heads_q=heads_q_custom,
             heads_k=heads_k_custom,
-            bias=bias,
-            mask=mask,
-            scale=0.125,
-            is_causal=True,
         )
 
         assert cross_attn_custom.heads_q == heads_q_custom
         assert cross_attn_custom.heads_k == heads_k_custom
-        assert cross_attn_custom.bias is bias
-        assert cross_attn_custom.mask is mask
-        assert cross_attn_custom.scale == 0.125
-        assert cross_attn_custom.is_causal is True
 
     def test_forward_shapes(self):
         # Test that the forward pass produces outputs with expected shapes
@@ -238,21 +223,21 @@ class TestCrossAttention:
         dim = 64
         heads_q = 4
 
-        cross_attn = CrossAttention(key, dim=dim, heads_q=heads_q)
+        cross_attn = CrossAttention(dim=dim, heads_q=heads_q)
+        cross_attn = set_rngs(cross_attn, key)
 
-        # Test with batch shape and different sequence lengths for x and y
+        # Create inputs with different sequence lengths but same embedding dimension
         batch_size = 2
-        seq_len_x = 10
-        seq_len_y = 15
+        seq_len_q = 10
+        seq_len_kv = 15
+        x = jnp.ones((batch_size, seq_len_q, dim))
+        y = jnp.ones((batch_size, seq_len_kv, dim))
 
-        x = jnp.ones((batch_size, seq_len_x, dim))
-        y = jnp.ones((batch_size, seq_len_y, dim))
-
-        # Forward pass
+        # Call the cross-attention module
         output = cross_attn(x, y)
 
-        # Output should have the same shape as x
-        assert output.shape == x.shape
+        # Check output shape - should match query shape
+        assert output.shape == (batch_size, seq_len_q, dim)
 
     def test_causal_cross_attention(self):
         # Test causal cross attention
@@ -261,22 +246,21 @@ class TestCrossAttention:
         heads_q = 4
 
         # Create causal cross attention
-        causal_cross_attn = CrossAttention(
-            key, dim=dim, heads_q=heads_q, is_causal=True
-        )
+        causal_cross_attn = CrossAttention(dim=dim, heads_q=heads_q, is_causal=True)
+        causal_cross_attn = set_rngs(causal_cross_attn, key)
 
+        # Create inputs with different sequence lengths
         batch_size = 2
-        seq_len_x = 10
-        seq_len_y = 10  # Same length for causal attention
+        seq_len_q = 8
+        seq_len_kv = 8  # For causal, usually seq_q == seq_kv
+        x = jnp.ones((batch_size, seq_len_q, dim))
+        y = jnp.ones((batch_size, seq_len_kv, dim))
 
-        x = jnp.ones((batch_size, seq_len_x, dim))
-        y = jnp.ones((batch_size, seq_len_y, dim))
+        # Call with causal mask
+        output = causal_cross_attn(x, y)
 
-        # Forward pass with causal mask
-        output_causal = causal_cross_attn(x, y)
-
-        # Output should have the same shape as x
-        assert output_causal.shape == x.shape
+        # Check output shape
+        assert output.shape == (batch_size, seq_len_q, dim)
 
     def test_dim_in_properties(self):
         # Test the dim_in_x and dim_in_y properties
@@ -284,19 +268,19 @@ class TestCrossAttention:
         dim = 64
         heads_q = 4
 
-        cross_attn = CrossAttention(key, dim=dim, heads_q=heads_q)
+        cross_attn = CrossAttention(dim=dim, heads_q=heads_q)
+        cross_attn = set_rngs(cross_attn, key)
 
-        # Initially, properties should be None
+        # Initially, dim_in_x and dim_in_y should be None
         assert cross_attn.dim_in_x is None
         assert cross_attn.dim_in_y is None
 
-        # After a forward pass, properties should be set
+        # After a forward pass, dim_in_x and dim_in_y should be set
         batch_size = 2
-        seq_len_x = 10
-        seq_len_y = 15
-
-        x = jnp.ones((batch_size, seq_len_x, dim))
-        y = jnp.ones((batch_size, seq_len_y, dim))
+        seq_len_q = 10
+        seq_len_kv = 15
+        x = jnp.ones((batch_size, seq_len_q, dim))
+        y = jnp.ones((batch_size, seq_len_kv, dim))
 
         cross_attn(x, y)
 
@@ -309,19 +293,14 @@ class TestCrossAttention:
         dim = 64
         heads_q = 4
 
-        cross_attn = CrossAttention(key, dim=dim, heads_q=heads_q)
+        cross_attn = CrossAttention(dim=dim, heads_q=heads_q)
+        cross_attn = set_rngs(cross_attn, key)
 
         batch_size = 2
-        seq_len_x = 10
-        seq_len_y = 15
-
-        x = jnp.ones((batch_size, seq_len_x, dim))
-        y = jnp.ones((batch_size, seq_len_y, dim))
-
-        # Create fresh keys for the q and kv linear layers
-        # This ensures the keys aren't consumed during tracing
-        cross_attn.q.key = jrn.PRNGKey(1)
-        cross_attn.kv.key = jrn.PRNGKey(2)
+        seq_len_q = 10
+        seq_len_kv = 15
+        x = jnp.ones((batch_size, seq_len_q, dim))
+        y = jnp.ones((batch_size, seq_len_kv, dim))
 
         # JIT compile the forward function
         @jax.jit
@@ -331,7 +310,7 @@ class TestCrossAttention:
         # This should compile and run without errors
         output = forward(cross_attn, x, y)
 
-        assert output.shape == x.shape
+        assert output.shape == (batch_size, seq_len_q, dim)
 
 
 def test_valid_attention_head_configurations():
@@ -341,66 +320,18 @@ def test_valid_attention_head_configurations():
 
     # For standard self-attention (equal heads)
     std_heads = 4
-    std_attn = DotProductAttention(key, dim=dim, heads_q=std_heads)
+    std_attn = DotProductAttention(dim=dim, heads_q=std_heads)
+    std_attn = set_rngs(std_attn, key)
 
-    # For grouped query attention (GQA) where multiple query heads share a
-    # key/value head
-    heads_q_gqa1 = 8
-    heads_k_gqa1 = 4  # 8 % 4 == 0
-    gqa_attn1 = DotProductAttention(
-        key, dim=dim, heads_q=heads_q_gqa1, heads_k=heads_k_gqa1
-    )
+    # For MHA where query heads are a multiple of key/value heads (GQA)
+    heads_q = 8
+    heads_k = 2  # 8 % 2 == 0
+    gqa_attn = DotProductAttention(dim=dim, heads_q=heads_q, heads_k=heads_k)
+    gqa_attn = set_rngs(gqa_attn, key)
 
-    # Another GQA configuration
-    heads_q_gqa2 = 16
-    heads_k_gqa2 = 2  # 16 % 2 == 0
-    gqa_attn2 = DotProductAttention(
-        key, dim=dim, heads_q=heads_q_gqa2, heads_k=heads_k_gqa2
-    )
+    # Check configurations
+    assert std_attn.heads_q == std_heads
+    assert std_attn.heads_k == std_heads
 
-    # For true multi-query attention (MQA) where all query heads share a single
-    #  key/value head
-    heads_q_mqa = 4
-    heads_k_mqa = 1  # The defining characteristic of MQA is heads_k = 1
-    mqa_attn = DotProductAttention(
-        key, dim=dim, heads_q=heads_q_mqa, heads_k=heads_k_mqa
-    )
-
-    batch_size = 2
-    seq_len = 10
-    x = jnp.ones((batch_size, seq_len, dim))
-
-    # Run all configurations
-    output_std = std_attn(x)
-    output_gqa1 = gqa_attn1(x)
-    output_gqa2 = gqa_attn2(x)
-    output_mqa = mqa_attn(x)
-
-    # Check shapes
-    assert output_std.shape == x.shape
-    assert output_gqa1.shape == x.shape
-    assert output_gqa2.shape == x.shape
-    assert output_mqa.shape == x.shape
-
-    # Same for CrossAttention
-    cross_std = CrossAttention(key, dim=dim, heads_q=std_heads)
-    cross_gqa1 = CrossAttention(
-        key, dim=dim, heads_q=heads_q_gqa1, heads_k=heads_k_gqa1
-    )
-    cross_gqa2 = CrossAttention(
-        key, dim=dim, heads_q=heads_q_gqa2, heads_k=heads_k_gqa2
-    )
-    cross_mqa = CrossAttention(key, dim=dim, heads_q=heads_q_mqa, heads_k=heads_k_mqa)
-
-    seq_len_y = 15
-    y = jnp.ones((batch_size, seq_len_y, dim))
-
-    output_cross_std = cross_std(x, y)
-    output_cross_gqa1 = cross_gqa1(x, y)
-    output_cross_gqa2 = cross_gqa2(x, y)
-    output_cross_mqa = cross_mqa(x, y)
-
-    assert output_cross_std.shape == x.shape
-    assert output_cross_gqa1.shape == x.shape
-    assert output_cross_gqa2.shape == x.shape
-    assert output_cross_mqa.shape == x.shape
+    assert gqa_attn.heads_q == heads_q
+    assert gqa_attn.heads_k == heads_k

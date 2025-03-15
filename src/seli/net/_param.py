@@ -7,7 +7,7 @@ from jaxtyping import PRNGKeyArray
 from seli._env import DEFAULT_FLOAT
 from seli.core._module import Module
 from seli.net._init import Init
-from seli.net._key import Key
+from seli.net._key import RNGs
 
 __all__ = [
     "Param",
@@ -26,7 +26,7 @@ class Param(Module, Generic[V], name="net.Param"):
     value: V
 
     init: Init | None
-    rngs: Key
+    rngs: RNGs
 
     def __init__(
         self,
@@ -39,7 +39,7 @@ class Param(Module, Generic[V], name="net.Param"):
         self.value = None
 
         self.collection = collection
-        self.rngs = Key(rngs, "init")
+        self.rngs = RNGs(rngs, "init")
 
     @classmethod
     def from_value(

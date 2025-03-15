@@ -4,18 +4,18 @@ import pytest
 from jaxtyping import PRNGKeyArray
 
 from seli.core._module import Module
-from seli.net._key import Key, set_keys
+from seli.net._key import RNGs, set_rngs
 
 
 def test_key_init():
     # Test initialization without a key
-    key_module = Key()
+    key_module = RNGs()
     assert key_module.collection is None
     assert not key_module.initialized
 
     # Test initialization with a key
     test_key = jrn.PRNGKey(0)
-    key_module = Key(key=test_key, collection="test_collection")
+    key_module = RNGs(key=test_key, collection="test_collection")
     assert key_module.collection == "test_collection"
     assert key_module.initialized
 
@@ -23,7 +23,7 @@ def test_key_init():
 def test_key_property():
     # Test that the key property splits the key correctly
     test_key = jrn.PRNGKey(0)
-    key_module = Key(key=test_key)
+    key_module = RNGs(key=test_key)
 
     # Get key, which should split the internal key
     first_key = key_module.key
@@ -39,22 +39,22 @@ def test_key_property():
 
 def test_key_property_error():
     # Test that accessing the key property raises an error if not initialized
-    key_module = Key()
+    key_module = RNGs()
     with pytest.raises(ValueError, match="Key has not been set"):
         _ = key_module.key
 
 
 class DeepModule(Module, name="test_key.DeepModule"):
     def __init__(self):
-        self.key1 = Key(collection="collection1")
-        self.key2 = Key(collection="collection2")
+        self.key1 = RNGs(collection="collection1")
+        self.key2 = RNGs(collection="collection2")
         self.nested = NestedModule()
 
 
 class NestedModule(Module, name="test_key.NestedModule"):
     def __init__(self):
-        self.key3 = Key(collection="collection1")
-        self.key4 = Key(collection="collection2")
+        self.key3 = RNGs(collection="collection1")
+        self.key4 = RNGs(collection="collection2")
 
 
 def test_set_keys_with_key():
@@ -69,7 +69,7 @@ def test_set_keys_with_key():
     assert not module.nested.key4.initialized
 
     # Set keys
-    result = set_keys(module, test_key)
+    result = set_rngs(module, test_key)
 
     # Verify all keys are initialized
     assert result.key1.initialized
@@ -84,7 +84,7 @@ def test_set_keys_with_seed():
     seed = 42
 
     # Set keys using the seed
-    result = set_keys(module, seed)
+    result = set_rngs(module, seed)
 
     # Verify all keys are initialized
     assert result.key1.initialized
@@ -99,7 +99,7 @@ def test_set_keys_with_collection():
     test_key = jrn.PRNGKey(0)
 
     # Set keys only for collection1
-    result = set_keys(module, test_key, collection=["collection1"])
+    result = set_rngs(module, test_key, collection=["collection1"])
 
     # Verify only keys in collection1 are initialized
     assert result.key1.initialized
@@ -118,7 +118,7 @@ def test_set_keys_with_already_initialized():
 
     # Set keys for all
     test_key = jrn.PRNGKey(0)
-    result = set_keys(module, test_key)
+    result = set_rngs(module, test_key)
 
     # Verify the pre-initialized key produced the same output
     # as if it had been initialized with test_key
@@ -136,8 +136,8 @@ def test_set_keys_determinism():
     seed = 42
 
     # Set keys for both modules
-    result1 = set_keys(module1, seed)
-    result2 = set_keys(module2, seed)
+    result1 = set_rngs(module1, seed)
+    result2 = set_rngs(module2, seed)
 
     # Get keys from both modules
     key1_1 = result1.key1._key
@@ -152,8 +152,8 @@ def test_set_keys_determinism():
 
 class ParameterizedModule(Module, name="test_key.ParameterizedModule"):
     def __init__(self):
-        self.dropout_key = Key(collection="dropout")
-        self.params_key = Key(collection="params")
+        self.dropout_key = RNGs(collection="dropout")
+        self.params_key = RNGs(collection="params")
         self.nested = {
             "layer1": NestedParameterizedModule(),
             "layer2": NestedParameterizedModule(),
@@ -162,8 +162,8 @@ class ParameterizedModule(Module, name="test_key.ParameterizedModule"):
 
 class NestedParameterizedModule(Module, name="test_key.NestedParameterizedModule"):
     def __init__(self):
-        self.dropout_key = Key(collection="dropout")
-        self.params_key = Key(collection="params")
+        self.dropout_key = RNGs(collection="dropout")
+        self.params_key = RNGs(collection="params")
 
 
 def test_set_keys_complex_structure():
@@ -172,7 +172,7 @@ def test_set_keys_complex_structure():
     test_key = jrn.PRNGKey(0)
 
     # Set only dropout keys
-    result = set_keys(module, test_key, collection=["dropout"])
+    result = set_rngs(module, test_key, collection=["dropout"])
 
     # Verify only dropout keys are initialized
     assert result.dropout_key.initialized
@@ -184,7 +184,7 @@ def test_set_keys_complex_structure():
 
     # Now set params keys
     new_key = jrn.PRNGKey(1)
-    result = set_keys(result, new_key, collection=["params"])
+    result = set_rngs(result, new_key, collection=["params"])
 
     # Verify all keys are initialized
     assert result.dropout_key.initialized

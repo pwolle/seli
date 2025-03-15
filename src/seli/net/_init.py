@@ -56,7 +56,7 @@ class Constant(Init, name="net.init.Constant"):
     Initializes all values to a constant value.
     """
 
-    def __init__(self, value: float):
+    def __init__(self, value: float = 1.0):
         self.value = value
 
     def __call__(
@@ -94,10 +94,10 @@ class TruncatedNormal(Init, name="net.init.TruncatedNormal"):
         return (
             jax.random.truncated_normal(
                 key,
-                shape,
-                dtype,
                 self.minv,
                 self.maxv,
+                shape,
+                dtype,
             )
             * self.scale
             + self.shift

@@ -79,6 +79,8 @@ The documentation will be available in `docs/_build/html`.
 - [x] Module repr
 - [x] Layers
 - [x] Filter jit and filter grad
+- [ ] Move layers to new param api
+    - Move tests to new param api
 - [ ] Optimizer
 - [ ] Dataloader
 - [ ] Supervised examples

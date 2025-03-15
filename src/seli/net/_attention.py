@@ -6,7 +6,7 @@ from typing import Literal
 
 import jax.nn as jnn
 import jax.numpy as jnp
-from jaxtyping import Array, Float, PRNGKeyArray, jaxtyped
+from jaxtyping import Array, Float, jaxtyped
 
 from seli.core._module import Module
 from seli.core._typecheck import typecheck
@@ -66,9 +66,6 @@ class DotProductAttention(Module, name="net.DotProductAttention"):
 
     Parameters
     ---
-    key: PRNGKeyArray
-        The key to use for random number generation.
-
     dim: int
         The dimension of the final output.
 
@@ -86,7 +83,6 @@ class DotProductAttention(Module, name="net.DotProductAttention"):
     @typecheck
     def __init__(
         self,
-        key: PRNGKeyArray,
         dim: int,
         heads_q: int,
         heads_k: int | None = None,
@@ -124,7 +120,6 @@ class DotProductAttention(Module, name="net.DotProductAttention"):
         self.implementation = implementation
 
         self.qkv = Linear(
-            key,
             self.dim_head * heads_q + self.dim_head * heads_k * 2,
         )
 
@@ -176,9 +171,6 @@ class CrossAttention(Module, name="net.CrossAttention"):
 
     Parameters
     ---
-    key: PRNGKeyArray
-        The key to use for random number generation.
-
     dim: int
         The dimension of the final output.
 
@@ -196,7 +188,6 @@ class CrossAttention(Module, name="net.CrossAttention"):
     @typecheck
     def __init__(
         self,
-        key: PRNGKeyArray,
         dim: int,
         heads_q: int,
         heads_k: int | None = None,
@@ -232,8 +223,8 @@ class CrossAttention(Module, name="net.CrossAttention"):
         self.key_value_seq_lengths = key_value_seq_lengths
         self.implementation = implementation
 
-        self.q = Linear(key, self.dim_head * heads_q)
-        self.kv = Linear(key, self.dim_head * heads_k * 2)
+        self.q = Linear(self.dim_head * heads_q)
+        self.kv = Linear(self.dim_head * heads_k * 2)
 
     @jaxtyped(typechecker=typecheck)
     def __call__(
