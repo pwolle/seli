@@ -20,9 +20,10 @@ def get_arrays(
     """
     Extract arrays from parameters in a module.
 
-    This function traverses the module and extracts all arrays from Param objects,
-    optionally filtering by collection. It returns a copy of the module with the
-    array values set to None, and a dictionary mapping path strings to arrays.
+    This function traverses the module and extracts all arrays from Param
+    objects, optionally filtering by collection. It returns a copy of the
+    module with the array values set to None, and a dictionary mapping path
+    strings to arrays.
 
     Parameters
     ---
@@ -30,7 +31,8 @@ def get_arrays(
         The module to extract arrays from.
 
     collection : str | None, default=None
-        If provided, only extract arrays from Param objects with this collection.
+        If provided, only extract arrays from Param objects with this
+        collection.
         If None, extract arrays from all Param objects.
 
     Returns
@@ -64,9 +66,9 @@ def set_arrays(
     """
     Set arrays back into parameters in a module.
 
-    This function takes a module and a dictionary of arrays, and sets the arrays
-    back into the corresponding Param objects in the module. The paths in the
-    dictionary should match those returned by get_arrays.
+    This function takes a module and a dictionary of arrays, and sets the
+    arrays back into the corresponding Param objects in the module. The paths
+    in the dictionary should match those returned by get_arrays.
 
     Parameters
     ---
@@ -102,11 +104,12 @@ def set_arrays(
 
 def grad(func: Callable[P, T], has_aux: bool = False) -> Callable[P, Any]:
     """
-    Create a function that computes gradients with respect to module parameters.
+    Create a function that computes gradients with respect to module
+    parameters.
 
-    This function wraps a loss function that takes a module as its first argument
-    and returns a new function that computes the gradients of the loss with respect
-    to the module's parameters.
+    This function wraps a loss function that takes a module as its first
+    argument and returns a new function that computes the gradients of the loss
+    with respect to the module's parameters.
 
     The gradient function extracts arrays from the module, computes gradients,
     and returns them in a dictionary mapping path strings to gradient arrays.
