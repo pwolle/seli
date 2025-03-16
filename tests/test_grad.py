@@ -34,7 +34,8 @@ def test_get_arrays():
     module.param3.value = jnp.array([[0.5, 0.5], [0.5, 0.5]])
 
     # Get all arrays
-    arrays = get_arrays(module)
+    arrays = get_arrays(module, collection="param")
+    arrays = arrays | get_arrays(module, collection="other")
 
     # Check that arrays were extracted
     assert len(arrays) == 3
@@ -87,7 +88,8 @@ def test_set_arrays():
     module.param3.value = jnp.array([[0.5, 0.5], [0.5, 0.5]])
 
     # Get arrays
-    arrays = get_arrays(module)
+    arrays = get_arrays(module, collection="param")
+    arrays = arrays | get_arrays(module, collection="other")
 
     # Create a new module with null values
     new_module = SimpleModule()

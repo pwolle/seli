@@ -3,13 +3,22 @@ from functools import partial, wraps
 from typing import Any, ParamSpec, TypeVar
 
 import jax
+import jax.numpy as jnp
 
-from seli.core._module import NodeType, PathKey, dfs_map
+from seli.core._module import AttrKey, NodeType, PathKey, dfs_map
 from seli.core._typecheck import typecheck
 from seli.net._param import Param
 
 P = ParamSpec("P")
 T = TypeVar("T")
+
+
+FLOAT_TYPES = (
+    jnp.float16,
+    jnp.float32,
+    jnp.float64,
+    jnp.bfloat16,
+)
 
 
 @typecheck
@@ -46,13 +55,32 @@ def get_arrays(
         if not isinstance(obj, jax.Array):
             return obj
 
+        # if no collection is provided, return all arrays
+        if collection is None:
+            arrays_paths[path] = obj
+            return obj
+
+        assert collection is not None
+
+        # if a collection is provided, the base object cannot be the array
+        # in a Param object
+        if not path.path:
+            return obj
+
+        # if the last item is not the value attribute, return the object
+        if path[-1] != AttrKey("value"):
+            return obj
+
+        # get the parent Param object
         parent_path = path[:-1]
         parent = parent_path.get(module)
 
+        # if the parent is not a Param object, return the object
         if not isinstance(parent, Param):
             return obj
 
-        if collection is not None and parent.collection != collection:
+        # if the collection does not match, return the object
+        if parent.collection != collection:
             return obj
 
         arrays_paths[path] = obj
@@ -95,11 +123,20 @@ def set_arrays(
     ValueError
         If a path in the arrays dictionary doesn't point to a Param object.
     """
-    module = dfs_map(module)  # perform memory efficient copy
+    array_paths = {PathKey.from_str(path): arr for path, arr in arrays.items()}
 
-    for path, array in arrays.items():
-        path = PathKey.from_str(path)
-        path.set(module, array)
+    if PathKey([]) in array_paths:
+        if len(arrays) != 1:
+            error = f"Base object is set to an array, but got path {arrays}"
+            raise ValueError(error)
+
+        return array_paths[PathKey([])]
+
+    # perform memory efficient copy
+    module = dfs_map(module)
+
+    for path, arr in array_paths.items():
+        path.set(module, arr)
 
     return module
 
@@ -156,6 +193,7 @@ def grad(
     @wraps(func)
     def wrap_fn(module: NodeType, *args: P.args, **kwargs: P.kwargs) -> Any:
         arrays = get_arrays(module, collection)
+        arrays = {k: v for k, v in arrays.items() if v.dtype in FLOAT_TYPES}
 
         @partial(jax.grad, has_aux=has_aux)
         def grad_fn(
@@ -223,6 +261,7 @@ def value_and_grad(
     @wraps(func)
     def wrap_fn(module: NodeType, *args: P.args, **kwargs: P.kwargs) -> Any:
         arrays = get_arrays(module, collection)
+        arrays = {k: v for k, v in arrays.items() if v.dtype in FLOAT_TYPES}
 
         @partial(jax.value_and_grad, has_aux=has_aux)
         def grad_fn(

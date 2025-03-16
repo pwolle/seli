@@ -26,17 +26,18 @@ class Param(Module, Generic[V], name="net.Param"):
     value: V
 
     init: Init | None
-    rngs: RNGs
+    rngs: RNGs | None
 
     def __init__(
         self,
         *,
         init: Init,
         rngs: PRNGKeyArray | None = None,
+        value: V | None = None,
         collection: str | None = "param",
     ) -> None:
         self.init = init
-        self.value = None
+        self.value = value
 
         self.collection = collection
         self.rngs = RNGs(rngs, "init")

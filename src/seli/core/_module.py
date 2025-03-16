@@ -351,7 +351,7 @@ def dfs_map(
     path = path or PathKey([])
     refs = refs or {}
 
-    if id(obj) in refs:
+    if id(obj) in refs and not isinstance(obj, LeafType):
         if refs_fun is None:
             return refs[id(obj)]
 
@@ -360,7 +360,7 @@ def dfs_map(
     obj_fun = fun(path, obj)
     refs[id(obj)] = obj_fun
 
-    if isinstance(obj_fun, (LeafType)):
+    if isinstance(obj_fun, LeafType):
         return obj_fun
 
     # if object is registered it is also a valid type, since we can covert it
