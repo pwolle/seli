@@ -12,6 +12,8 @@ class Loss(seli.opt.Loss):
 model = jnp.zeros(())
 
 loss = Loss()
+loss.collection = None
+
 optimizer = seli.opt.SGD(lr=0.1)
 
 

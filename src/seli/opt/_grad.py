@@ -195,6 +195,10 @@ def grad(
         arrays = get_arrays(module, collection)
         arrays = {k: v for k, v in arrays.items() if v.dtype in FLOAT_TYPES}
 
+        if not arrays:
+            error = f"No float arrays in module with collection {collection}"
+            raise ValueError(error)
+
         @partial(jax.grad, has_aux=has_aux)
         def grad_fn(
             arrays: dict[str, jax.Array],
@@ -262,6 +266,10 @@ def value_and_grad(
     def wrap_fn(module: NodeType, *args: P.args, **kwargs: P.kwargs) -> Any:
         arrays = get_arrays(module, collection)
         arrays = {k: v for k, v in arrays.items() if v.dtype in FLOAT_TYPES}
+
+        if not arrays:
+            error = f"No float arrays in module with collection {collection}"
+            raise ValueError(error)
 
         @partial(jax.value_and_grad, has_aux=has_aux)
         def grad_fn(

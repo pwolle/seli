@@ -15,7 +15,7 @@ class Loss(Module, name="opt.Loss"):
     @property
     def collection(self) -> str | None:
         if not hasattr(self, "_collection"):
-            return None
+            return "param"
 
         return self._collection
 
