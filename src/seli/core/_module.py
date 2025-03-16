@@ -258,6 +258,12 @@ class PathKey(Module, name="builtin.PathKey"):
 
         return cls(keys)
 
+    def __getitem__(self, item: int | slice) -> "ItemKey | AttrKey | PathKey":
+        if isinstance(item, slice):
+            return type(self)(self.path[item])
+
+        return self.path[item]
+
 
 def dfs_map(
     obj: NodeType,

@@ -16,7 +16,7 @@ T = TypeVar("T")
 def get_arrays(
     module: NodeType,
     collection: str | None = None,
-) -> tuple[NodeType, dict[str, jax.Array]]:
+) -> dict[str, jax.Array]:
     """
     Extract arrays from parameters in a module.
 
@@ -37,25 +37,32 @@ def get_arrays(
 
     Returns
     ---
-    tuple[NodeType, dict[str, jax.Array]]
-        A tuple containing:
-        - A copy of the module with array values set to None
-        - A dictionary mapping path strings to arrays
+    dict[str, jax.Array]
+        A dictionary mapping path strings to arrays
     """
     arrays_paths: dict[PathKey, jax.Array] = {}
 
     def fun(path: PathKey, obj: NodeType):
-        if isinstance(obj, Param):
-            if collection is None or collection == obj.collection:
-                arrays_paths[path] = obj.value
-                obj.value = None
+        if not isinstance(obj, jax.Array):
+            return obj
 
+        parent_path = path[:-1]
+        parent = parent_path.get(module)
+
+        if not isinstance(parent, Param):
+            return obj
+
+        if collection is not None and parent.collection != collection:
+            return obj
+
+        arrays_paths[path] = obj
         return obj
 
+    # does not create any side effects
     module = dfs_map(module, fun)
 
     arrays = {repr(path): arr for path, arr in arrays_paths.items()}
-    return module, arrays
+    return arrays
 
 
 @typecheck
@@ -92,17 +99,17 @@ def set_arrays(
 
     for path, array in arrays.items():
         path = PathKey.from_str(path)
-        param = path.get(module)
-
-        if not isinstance(param, Param):
-            raise ValueError(f"Expected Param, got {type(param)}")
-
-        param.value = array
+        path.set(module, array)
 
     return module
 
 
-def grad(func: Callable[P, T], has_aux: bool = False) -> Callable[P, Any]:
+def grad(
+    func: Callable[P, T],
+    *,
+    collection: str | None = None,
+    has_aux: bool = False,
+) -> Callable[P, Any]:
     """
     Create a function that computes gradients with respect to module
     parameters.
@@ -119,6 +126,11 @@ def grad(func: Callable[P, T], has_aux: bool = False) -> Callable[P, Any]:
     func : Callable
         The function to compute gradients for. It should take a module as its
         first argument and return a scalar loss value.
+
+    collection : str | None, default=None
+        If provided, only extract arrays from Param objects with this
+        collection.
+        If None, extract arrays from all Param objects.
 
     has_aux : bool, default=False
         Whether the function returns auxiliary data. If True, the function
@@ -143,18 +155,84 @@ def grad(func: Callable[P, T], has_aux: bool = False) -> Callable[P, Any]:
 
     @wraps(func)
     def wrap_fn(module: NodeType, *args: P.args, **kwargs: P.kwargs) -> Any:
-        module, arrays = get_arrays(module)
+        arrays = get_arrays(module, collection)
 
         @partial(jax.grad, has_aux=has_aux)
         def grad_fn(
             arrays: dict[str, jax.Array],
-            module: NodeType,
             *args: P.args,
             **kwargs: P.kwargs,
         ) -> Any:
-            module = set_arrays(module, arrays)
-            return func(module, *args, **kwargs)
+            module_ = set_arrays(module, arrays)
+            return func(module_, *args, **kwargs)
 
-        return grad_fn(arrays, module, *args, **kwargs)
+        return grad_fn(arrays, *args, **kwargs)
+
+    return wrap_fn
+
+
+def value_and_grad(
+    func: Callable[P, T],
+    *,
+    collection: str | None = None,
+    has_aux: bool = False,
+) -> Callable[P, Any]:
+    """
+    Create a function that computes gradients with respect to module
+    parameters.
+
+    This function wraps a loss function that takes a module as its first
+    argument and returns a new function that computes the gradients of the loss
+    with respect to the module's parameters.
+
+    The gradient function extracts arrays from the module, computes gradients,
+    and returns them in a dictionary mapping path strings to gradient arrays.
+
+    Parameters
+    ---
+    func : Callable
+        The function to compute gradients for. It should take a module as its
+        first argument and return a scalar loss value.
+
+    collection : str | None, default=None
+        If provided, only extract arrays from Param objects with this
+        collection.
+        If None, extract arrays from all Param objects.
+
+    has_aux : bool, default=False
+        Whether the function returns auxiliary data. If True, the function
+        should return a tuple (loss, aux_data), where loss is a scalar and
+        aux_data can be any type.
+
+    Returns
+    ---
+    Callable
+        A new function that takes the same arguments as func but returns
+        values and gradients with respect to the module's parameters.
+        If has_aux is True, it returns a tuple (gradients, aux_data).
+
+    Examples
+    ---
+    >>> def loss_fn(module, x, y):
+    ...     pred = module(x)
+    ...     return ((pred - y) ** 2).mean()
+    >>> grad_fn = grad(loss_fn)
+    >>> value, gradients = grad_fn(module, x, y)
+    """
+
+    @wraps(func)
+    def wrap_fn(module: NodeType, *args: P.args, **kwargs: P.kwargs) -> Any:
+        arrays = get_arrays(module, collection)
+
+        @partial(jax.value_and_grad, has_aux=has_aux)
+        def grad_fn(
+            arrays: dict[str, jax.Array],
+            *args: P.args,
+            **kwargs: P.kwargs,
+        ) -> Any:
+            module_ = set_arrays(module, arrays)
+            return func(module_, *args, **kwargs)
+
+        return grad_fn(arrays, *args, **kwargs)
 
     return wrap_fn
