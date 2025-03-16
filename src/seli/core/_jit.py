@@ -28,13 +28,22 @@ class Result(Module, name="builtin.Result"):
     Wrapper for the result of a function.
     """
 
-    value: Any
+    is_tuple: bool
 
     def __init__(self, value: Any) -> None:
-        if isinstance(value, tuple):
+        self.is_tuple = isinstance(value, tuple)
+
+        if self.is_tuple:
             value = list(value)
 
-        self.value = value
+        self._value = value
+
+    @property
+    def value(self) -> Any:
+        if self.is_tuple:
+            return tuple(self._value)
+
+        return self._value
 
 
 @partial(jax.jit, static_argnames=("function",))

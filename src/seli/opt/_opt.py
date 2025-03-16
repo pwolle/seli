@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable
 from typing import Any, ParamSpec, Self, TypeVar
 
@@ -10,6 +11,7 @@ from seli.core._typecheck import typecheck
 from seli.opt._grad import get_arrays, set_arrays, value_and_grad
 from seli.opt._loss import Loss
 
+logger = logging.getLogger(__name__)
 P = ParamSpec("P")
 T = TypeVar("T")
 M = TypeVar("M", bound=NodeType)
@@ -42,11 +44,13 @@ class Optimizer(Module, name="opt.Optimizer"):
 
     def __call__(
         self,
+        model: NodeType,
         loss: Float[Array, ""],
         grads: dict[str, Float[Array, "..."]],
         values: dict[str, Float[Array, "..."]],
     ) -> dict[str, Float[Array, "..."]]:
         grads = self.call_model(
+            model=model,
             loss=loss,
             params=values,
             grads=grads,
@@ -54,6 +58,7 @@ class Optimizer(Module, name="opt.Optimizer"):
 
         for key, grad in grads.items():
             grads[key] = self.call_param(
+                loss=loss,
                 key=key,
                 grad=grad,
                 param=values[key],
@@ -80,28 +85,38 @@ def _minimize(
     *args: Any,
     **kwargs: Any,
 ) -> tuple[Optimizer, M, Float[Array, ""]]:
-    loss_fn = _return_model_and_loss(loss_fn)
-    loss_fn = value_and_grad(
-        loss_fn,
+    loss_fn_wrapped = _return_model_and_loss(loss_fn)
+    loss_fn_wrapped = value_and_grad(
+        loss_fn_wrapped,
         collection=loss_fn.collection,
         has_aux=True,
     )
 
-    (loss_value, model), grads = loss_fn(model, *args, **kwargs)
-    _, arrays = get_arrays(model, loss_fn.collection)
+    (loss_value, model), grads = loss_fn_wrapped(model, *args, **kwargs)
+    arrays = get_arrays(model, loss_fn.collection)
 
     # subset of arrays that is used for gradient descent
     arrays_subset: dict[str, Array] = {}
+    missed_keys: list[str] = []
 
     for key in grads.keys():
         if key not in arrays:
-            error = f"Gradient for {key} not found in arrays"
-            raise ValueError(error)
+            logger.error(f"Gradient at {key} but not found in module")
+            missed_keys.append(key)
+            continue
 
         arrays_subset[key] = arrays[key]
 
+    for key in missed_keys:
+        grads.pop(key)
+
     # process gradients
-    grads = optimizer(loss=loss_value, grads=grads, values=arrays_subset)
+    grads = optimizer(
+        model=model,
+        loss=loss_value,
+        grads=grads,
+        values=arrays_subset,
+    )
 
     for key, grad in grads.items():
         # perform gradient descent with modified gradients

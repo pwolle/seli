@@ -1,4 +1,4 @@
-from seli import net
+from seli import net, opt
 from seli.core._module import (
     AttrKey,
     ItemKey,
@@ -53,4 +53,6 @@ __all__ = [
     "from_arrays_and_json",
     # From net/__init__.py
     "net",
+    # From opt/__init__.py
+    "opt",
 ]
