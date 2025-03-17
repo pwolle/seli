@@ -59,7 +59,6 @@ def compute_trajectory(optimizer, start):
     full_trajectory = trajectory + [
         trajectory_models[i] for i in range(trajectory_models.shape[0])
     ]
-
     return full_trajectory
 
 
@@ -105,7 +104,7 @@ for name, trajectory in results.items():
         label=name,
     )
 
-ax.scatter(start[0], start[1], color="k", marker="o", s=30, zorder=10)
+ax.scatter(start[0], start[1], color="k", marker="o", s=20, zorder=10)
 ax.text(start[0] - 0.05, start[1], "Start", ha="right", va="center")
 
 optimum = jnp.array([1, 1])

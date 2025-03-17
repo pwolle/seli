@@ -1,4 +1,5 @@
 from seli import net, opt
+from seli.core._jit import jit
 from seli.core._module import (
     AttrKey,
     ItemKey,
@@ -55,4 +56,6 @@ __all__ = [
     "net",
     # From opt/__init__.py
     "opt",
+    # From _jit.py
+    "jit",
 ]

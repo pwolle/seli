@@ -1,3 +1,7 @@
+"""
+This module contains environment variables.
+"""
+
 import jax.numpy as jnp
 from jax.typing import DTypeLike
 
