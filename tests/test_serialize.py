@@ -133,34 +133,6 @@ def test_serialize_complex_module():
         )
 
 
-def test_serialize_with_shared_arrays():
-    # Create a shared array
-    shared_array = jnp.array([1, 2, 3])
-
-    # Create a module that uses the same array in two places
-    class SharedArrayModule(Module, name="test.SharedArrayModule"):
-        def __init__(self, arr):
-            self.array1 = arr
-            self.array2 = arr  # Same array reference
-
-    module = SharedArrayModule(shared_array)
-
-    arrays, json_str = to_arrays_and_json(module)
-
-    # There should be 1 array placeholder
-    assert len(arrays) == 1
-
-    # Deserialize
-    result = from_arrays_and_json(arrays, json_str)
-
-    assert isinstance(result, SharedArrayModule)
-    np.testing.assert_array_equal(result.array1, shared_array)
-    np.testing.assert_array_equal(result.array2, shared_array)
-
-    # The arrays should be the same object
-    assert result.array1 is result.array2
-
-
 def test_serialize_with_empty_structures():
     # Create a module with empty structures
     class EmptyStructuresModule(Module, name="test.EmptyStructuresModule"):

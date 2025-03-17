@@ -25,11 +25,11 @@ def test_result_init():
     result = Result(value)
     assert result.value == value
 
-    # Test with a tuple (should be converted to list)
+    # Test with a tuple, is not a valid type, but should appear to be a tuple
     tuple_value = (1, 2, 3)
     result = Result(tuple_value)
-    assert result.value == list(tuple_value)
-    assert isinstance(result.value, list)
+    assert result.value == tuple_value
+    assert isinstance(result.value, tuple)
 
 
 def test_apply_filter_jit_direct():
@@ -135,7 +135,7 @@ def test_jit_with_multiple_outputs():
     result = multi_output(3)
     # The Result class converts tuples to lists, so we need to adjust our
     # assertion
-    assert result == [3, 9, 27]
+    assert result == (3, 9, 27)
 
 
 def test_jit_with_nested_modules():

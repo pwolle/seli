@@ -44,7 +44,7 @@ def test_softcap_function():
 class TestDotProductAttention:
     def test_initialization(self):
         # Test initialization with required parameters
-        dim = 64
+        dim = 16
         heads_q = 4
 
         attn = DotProductAttention(dim=dim, heads_q=heads_q)
@@ -76,7 +76,7 @@ class TestDotProductAttention:
     def test_forward_shapes(self):
         # Test that the forward pass produces outputs with expected shapes
         key = jrn.PRNGKey(0)
-        dim = 64
+        dim = 16
         heads_q = 4
 
         attn = DotProductAttention(dim=dim, heads_q=heads_q)
@@ -96,7 +96,7 @@ class TestDotProductAttention:
     def test_forward_with_bias_and_mask(self):
         # Test the forward pass with bias and mask
         key = jrn.PRNGKey(0)
-        dim = 64
+        dim = 16
         heads_q = 4
 
         attn = DotProductAttention(dim=dim, heads_q=heads_q)
@@ -122,7 +122,7 @@ class TestDotProductAttention:
     def test_causal_attention(self):
         # Test causal attention mask
         key = jrn.PRNGKey(0)
-        dim = 64
+        dim = 16
         heads_q = 4
 
         # Create causal attention
@@ -143,7 +143,7 @@ class TestDotProductAttention:
     def test_dim_in_property(self):
         # Test the dim_in property
         key = jrn.PRNGKey(0)
-        dim = 64
+        dim = 16
         heads_q = 4
 
         attn = DotProductAttention(dim=dim, heads_q=heads_q)
@@ -164,7 +164,7 @@ class TestDotProductAttention:
     def test_jit_compatibility(self):
         # Test JIT compatibility
         key = jrn.PRNGKey(0)
-        dim = 64
+        dim = 16
         heads_q = 4
 
         attn = DotProductAttention(dim=dim, heads_q=heads_q)
@@ -188,7 +188,7 @@ class TestDotProductAttention:
 class TestCrossAttention:
     def test_initialization(self):
         # Test initialization with required parameters
-        dim = 64
+        dim = 16
         heads_q = 4
 
         cross_attn = CrossAttention(dim=dim, heads_q=heads_q)
@@ -220,7 +220,7 @@ class TestCrossAttention:
     def test_forward_shapes(self):
         # Test that the forward pass produces outputs with expected shapes
         key = jrn.PRNGKey(0)
-        dim = 64
+        dim = 16
         heads_q = 4
 
         cross_attn = CrossAttention(dim=dim, heads_q=heads_q)
@@ -242,7 +242,7 @@ class TestCrossAttention:
     def test_causal_cross_attention(self):
         # Test causal cross attention
         key = jrn.PRNGKey(0)
-        dim = 64
+        dim = 16
         heads_q = 4
 
         # Create causal cross attention
@@ -265,7 +265,7 @@ class TestCrossAttention:
     def test_dim_in_properties(self):
         # Test the dim_in_x and dim_in_y properties
         key = jrn.PRNGKey(0)
-        dim = 64
+        dim = 16
         heads_q = 4
 
         cross_attn = CrossAttention(dim=dim, heads_q=heads_q)
@@ -290,7 +290,7 @@ class TestCrossAttention:
     def test_jit_compatibility(self):
         # Test JIT compatibility
         key = jrn.PRNGKey(0)
-        dim = 64
+        dim = 16
         heads_q = 4
 
         cross_attn = CrossAttention(dim=dim, heads_q=heads_q)
@@ -316,7 +316,7 @@ class TestCrossAttention:
 def test_valid_attention_head_configurations():
     # Test valid attention configurations that work with the JAX constraint
     key = jrn.PRNGKey(0)
-    dim = 64
+    dim = 16
 
     # For standard self-attention (equal heads)
     std_heads = 4
