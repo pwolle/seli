@@ -65,6 +65,7 @@ The documentation will be available in `docs/_build/html`.
 - [ ] Documentation
 - [ ] CI on github actions
 - [ ] Push to pypi
+- [ ] Convnets
 - [ ] Dataloader
 - [ ] Datasets
 - [ ] Training loop/trainer

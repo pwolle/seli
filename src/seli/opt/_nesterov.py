@@ -5,7 +5,7 @@ from jaxtyping import Float
 from seli.opt._opt import Optimizer
 
 
-class Nesterov(Optimizer):
+class Nesterov(Optimizer, name="opt.Nesterov"):
     """
     Nesterov Accelerated Gradient optimizer.
 

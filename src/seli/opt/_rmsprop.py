@@ -6,7 +6,7 @@ from seli.opt._opt import Optimizer
 from seli.opt._utils import lerp
 
 
-class RMSProp(Optimizer):
+class RMSProp(Optimizer, name="opt.RMSProp"):
     """
     Root Mean Square Propagation optimizer.
 

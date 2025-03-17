@@ -6,7 +6,7 @@ from seli.opt._opt import Optimizer
 from seli.opt._utils import lerp
 
 
-class Adam(Optimizer):
+class Adam(Optimizer, name="opt.Adam"):
     """
     Adaptive Moment Estimation optimizer.
 

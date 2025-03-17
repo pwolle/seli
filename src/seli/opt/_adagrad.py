@@ -5,7 +5,7 @@ from jaxtyping import Float
 from seli.opt._opt import Optimizer
 
 
-class Adagrad(Optimizer):
+class Adagrad(Optimizer, name="opt.Adagrad"):
     """
     Adaptive Gradient optimizer.
 

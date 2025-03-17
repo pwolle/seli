@@ -5,7 +5,7 @@ from jaxtyping import Float
 from seli.opt._opt import Optimizer
 
 
-class Momentum(Optimizer):
+class Momentum(Optimizer, name="opt.Momentum"):
     """
     Momentum optimizer.
 
