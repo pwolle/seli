@@ -120,9 +120,12 @@ ax.set_ylim(y.min(), y.max())
 # put legend outside of the plot
 ax.legend(
     frameon=False,
-    loc="center left",
-    bbox_to_anchor=(1, 0.5),
+    loc="upper center",
+    bbox_to_anchor=(0.5, -0.01),
+    ncol=3,
 )
+
+ax.set_title("Optimizing the Rosenbrock function", pad=10)
 
 fig.savefig(
     get_plot_path("rosenbrock.png"),

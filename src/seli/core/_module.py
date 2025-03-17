@@ -8,6 +8,7 @@ from collections.abc import Callable, Hashable, Sequence
 from typing import Any, Self, TypeAlias
 
 import jax
+from jaxtyping import PRNGKeyArray
 
 from seli.core._registry import REGISTRY_INVERSE, ModuleBase
 from seli.core._typecheck import typecheck
@@ -88,6 +89,11 @@ class Module(ModuleBase, name="builtin.Module"):
 
     def __repr__(self) -> str:
         return node_repr(self)
+
+    def set_rngs(self, rngs: PRNGKeyArray | int) -> Self:
+        from seli.net._key import set_rngs
+
+        return set_rngs(self, rngs)
 
 
 LeafType: TypeAlias = (
@@ -601,6 +607,9 @@ def node_repr(obj: NodeType, /, indent: str = " " * 4) -> str:
         return f"<obj{obj!r}>"
 
     if isinstance(obj, list):
+        if not obj:
+            return "[]"
+
         head = "[\n"
         body = ""
 
@@ -613,6 +622,9 @@ def node_repr(obj: NodeType, /, indent: str = " " * 4) -> str:
         return head + body + tail
 
     if isinstance(obj, dict):
+        if not obj:
+            return "{}"
+
         head = "{\n"
         body = ""
 
@@ -625,15 +637,19 @@ def node_repr(obj: NodeType, /, indent: str = " " * 4) -> str:
         return head + body + tail
 
     if isinstance(obj, Module):
-        head = f"{obj.__class__.__name__}(\n"
-        body = ""
-
         keys = []
+
         if hasattr(obj, "__dict__"):
             keys.extend(obj.__dict__.keys())
 
         if hasattr(obj, "__slots__"):
             keys.extend(obj.__slots__)
+
+        if not keys:
+            return f"{obj.__class__.__name__}()"
+
+        head = f"{obj.__class__.__name__}(\n"
+        body = ""
 
         for key in sorted(keys):
             value = getattr(obj, key)

@@ -61,10 +61,10 @@ The documentation will be available in `docs/_build/html`.
 - [x] Move layers to new param api
 - [x] Move tests to new param api
 - [x] Optimizer
+- [x] Documentation
+- [x] CI on github actions
+- [x] Push to pypi
 - [ ] set rngs from module
-- [ ] Documentation
-- [ ] CI on github actions
-- [ ] Push to pypi
 - [ ] Convnets
 - [ ] Dataloader
 - [ ] Datasets

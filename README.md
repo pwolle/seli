@@ -67,7 +67,7 @@ assert isinstance(model, Linear)
 
 ## Installation
 
-You can install from PiPy using pip
+You can install from PyPI using pip
 
 ```bash
 pip install seli
