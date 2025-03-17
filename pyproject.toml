@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "seli"
-version = "0.1.0"
+version = "0.1.1"
 description = "A Python package called seli"
 readme = "README.md"
 authors = [
-    {name = "Your Name", email = "your.email@example.com"},
+    {name = "Paul Wollenhaupt", email = "paul.wollenhaupt@gmail.com"},
 ]
 license = {text = "MIT"}
 classifiers = [
@@ -39,10 +39,13 @@ docs = [
     "sphinx-rtd-theme>=1.2.0",
     "myst-parser>=2.0.0",  # For Markdown support in Sphinx
 ]
+examples = [
+    "matplotlib>=3.8.0",
+]
 
 [project.urls]
-"Homepage" = "https://github.com/yourusername/seli"
-"Bug Tracker" = "https://github.com/yourusername/seli/issues"
+"Homepage" = "https://github.com/paulwollenhaupt/seli"
+"Bug Tracker" = "https://github.com/paulwollenhaupt/seli/issues"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

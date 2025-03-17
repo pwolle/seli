@@ -22,7 +22,7 @@ Define new layers by subclassing `seli.Module`. All modules are PyTrees.
 import seli
 
 # add a name to make the module saveable
-class Linear(seli.Module, name="example:Linear");
+class Linear(sl.Module, name="example:Linear");
     def __init__(self, dim: int)
         self.dim = dim
 
@@ -42,7 +42,7 @@ model = Linear(10).set_rngs(42)
 y = model(jnp.ones(8))
 ```
 
-A training step can be written as follows:
+A training step can be written as follows, it requires python 3.11 or newer.
 
 ``` python
 optimizer = seli.opt.Adam(1e-3)

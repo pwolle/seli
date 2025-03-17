@@ -52,7 +52,6 @@ make html
 
 The documentation will be available in `docs/_build/html`.
 
-
 ## Roadmap
 - [x] Module Meta
 - [x] Serialize
@@ -62,6 +61,7 @@ The documentation will be available in `docs/_build/html`.
 - [x] Move layers to new param api
 - [x] Move tests to new param api
 - [x] Optimizer
+- [ ] set rngs from module
 - [ ] Documentation
 - [ ] CI on github actions
 - [ ] Push to pypi
