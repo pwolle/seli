@@ -32,9 +32,3 @@ jobs:
     - name: Run tests with pytest
       run: |
         pytest --cov=src tests/
-
-    - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: .coverage
-        fail_ci_if_error: false

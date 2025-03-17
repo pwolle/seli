@@ -1,7 +1,7 @@
+[![Python Tests](https://github.com/pwolle/seli/actions/workflows/pytest.yml/badge.svg)](https://github.com/pwolle/seli/actions/workflows/pytest.yml)
 # Seli
 
 Minimizing the time from idea to implementation with flexible neural networks in seli.
-
 
 ## Features
 - Mutable modules for quick and dirty modifications via Module
@@ -20,7 +20,7 @@ Define new layers by subclassing `seli.Module`. All modules are PyTrees.
 import seli
 
 # add a name to make the module saveable
-class Linear(seli.Module, name="example:Linear);
+class Linear(seli.Module, name="example:Linear");
     def __init__(self, dim: int)
         self.dim = dim
 
