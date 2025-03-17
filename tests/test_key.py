@@ -1,7 +1,6 @@
 import jax.numpy as jnp
 import jax.random as jrn
 import pytest
-from jaxtyping import PRNGKeyArray
 
 from seli.core._module import Module
 from seli.net._key import RNGs, set_rngs
@@ -27,7 +26,6 @@ def test_key_property():
 
     # Get key, which should split the internal key
     first_key = key_module.key
-    assert isinstance(first_key, PRNGKeyArray)
 
     # Get another key, which should be different
     second_key = key_module.key

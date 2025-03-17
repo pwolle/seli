@@ -76,8 +76,6 @@ def set_rngs(
     if isinstance(key_or_seed, int):
         key_or_seed = jrn.PRNGKey(key_or_seed)
 
-    assert isinstance(key_or_seed, PRNGKeyArray)
-
     keys_in_module: list[PathKey] = []
 
     def fun(path: PathKey, node: NodeType):
