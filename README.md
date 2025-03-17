@@ -3,6 +3,7 @@
 Minimizing the time from idea to implementation with flexible neural networks in seli.
 
 [![Python Tests](https://github.com/pwolle/seli/actions/workflows/pytest.yml/badge.svg)](https://github.com/pwolle/seli/actions/workflows/pytest.yml)
+[![PyPI version](https://img.shields.io/pypi/v/seli.svg)](https://pypi.org/project/seli/)
 
 
 ## Features
