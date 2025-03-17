@@ -1,7 +1,9 @@
-[![Python Tests](https://github.com/pwolle/seli/actions/workflows/pytest.yml/badge.svg)](https://github.com/pwolle/seli/actions/workflows/pytest.yml)
 # Seli
 
 Minimizing the time from idea to implementation with flexible neural networks in seli.
+
+[![Python Tests](https://github.com/pwolle/seli/actions/workflows/pytest.yml/badge.svg)](https://github.com/pwolle/seli/actions/workflows/pytest.yml)
+
 
 ## Features
 - Mutable modules for quick and dirty modifications via Module
