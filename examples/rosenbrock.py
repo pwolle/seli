@@ -1,7 +1,7 @@
-# %%
 import jax.lax as lax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
+from utils import get_plot_path
 
 import seli
 
@@ -22,14 +22,16 @@ start = jnp.array([-0.5, 1])
 
 def compute_trajectory(optimizer, start):
     model = start
-    manual_steps = 4
     remaining_steps = 2**12
 
     trajectory = [model]
     current_optimizer = optimizer
     current_model = model
 
-    for _ in range(manual_steps):
+    # run for a few steps manually to make sure the optimizer is initialized
+    # this is necessary, since lax.scan expects the computation graph to be
+    # the same for all iterations
+    for _ in range(2):
         current_optimizer, current_model, _ = current_optimizer.minimize(
             loss, current_model
         )
@@ -123,6 +125,8 @@ ax.legend(
     bbox_to_anchor=(1, 0.5),
 )
 
-plt.show()
-
-# %%
+fig.savefig(
+    get_plot_path("rosenbrock.png"),
+    dpi=267,
+    bbox_inches="tight",
+)
