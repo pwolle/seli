@@ -64,10 +64,10 @@ The documentation will be available in `docs/_build/html`.
 - [x] Documentation
 - [x] CI on github actions
 - [x] Push to pypi
-- [ ] set rngs from module
+- [x] set rngs from module
+- [ ] Supervised examples
+- [ ] Unsupervised examples
 - [ ] Convnets
 - [ ] Dataloader
 - [ ] Datasets
 - [ ] Training loop/trainer
-- [ ] Supervised examples
-- [ ] Unsupervised examples

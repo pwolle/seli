@@ -117,6 +117,7 @@ def _minimize(
         grads=grads,
         values=arrays_subset,
     )
+    # print(grads.keys())
 
     for key, grad in grads.items():
         # perform gradient descent with modified gradients

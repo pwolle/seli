@@ -1,6 +1,7 @@
 import jax.lax as lax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 from utils import get_plot_path
 
 import seli
@@ -73,7 +74,7 @@ optimizers = {
 
 results = {}
 
-for name, optimizer in optimizers.items():
+for name, optimizer in tqdm(optimizers.items(), desc="Computing trajectories"):
     results[name] = compute_trajectory(optimizer, start)
 
 
@@ -129,6 +130,6 @@ ax.set_title("Optimizing the Rosenbrock function", pad=10)
 
 fig.savefig(
     get_plot_path("rosenbrock.png"),
-    dpi=267,
+    dpi=256,
     bbox_inches="tight",
 )

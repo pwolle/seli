@@ -6,7 +6,7 @@ from jaxtyping import Array, Float, jaxtyped
 
 from seli.core._module import Module
 from seli.core._typecheck import typecheck
-from seli.net._init import Normal, Zeros
+from seli.net._init import Uniform, Zeros
 from seli.net._param import Param
 
 __all__ = [
@@ -32,7 +32,7 @@ class Linear(Module, name="net.Linear"):
 
     def __init__(self, dim: int) -> None:
         self.dim = dim
-        self.weight = Param(init=Normal(init="He"))
+        self.weight = Param(init=Uniform(init="Glorot"))
 
     @jaxtyped(typechecker=typecheck)
     def __call__(

@@ -41,6 +41,7 @@ docs = [
 ]
 examples = [
     "matplotlib>=3.8.0",
+    "tqdm>=4.67.1",
 ]
 
 [project.urls]
@@ -73,7 +74,7 @@ target-version = "py38"
 [tool.ruff.lint]
 # Enable flake8-bugbear (`B`) rules.
 select = ["E", "F", "B", "I"]
-ignore = ["F722"]
+ignore = ["F722", "F401"]
 
 # Allow fix for all enabled rules.
 fixable = ["ALL"]

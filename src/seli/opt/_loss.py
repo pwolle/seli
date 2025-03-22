@@ -1,3 +1,4 @@
+import jax.nn as jnn
 import jax.numpy as jnp
 from jax import Array
 from jaxtyping import Float
@@ -41,6 +42,8 @@ class MeanSquaredError(Loss, name="opt.MeanSquaredError"):
         **model_kwargs,
     ) -> Float[Array, ""]:
         y_pred = model(*model_args, **model_kwargs)
+        y_pred = y_pred.squeeze()
+        print((y_pred - y_true).shape)
         return jnp.mean(jnp.square(y_pred - y_true))
 
 
@@ -57,4 +60,26 @@ class MeanAbsoluteError(Loss, name="opt.MeanAbsoluteError"):
         **model_kwargs,
     ) -> Float[Array, ""]:
         y_pred = model(*model_args, **model_kwargs)
+        y_pred = y_pred.squeeze()
+
         return jnp.mean(jnp.abs(y_pred - y_true))
+
+
+class BinaryCrossEntropy(Loss, name="opt.BinaryCrossEntropy"):
+    """
+    Binary cross entropy loss function.
+    """
+
+    def __call__(
+        self,
+        model: NodeType,
+        y_true: Float[Array, "..."],
+        *model_args,
+        **model_kwargs,
+    ) -> Float[Array, ""]:
+        y_logits = model(*model_args, **model_kwargs)
+        y_logits = y_logits.squeeze()
+
+        pos_term = y_true * jnn.log_sigmoid(y_logits)
+        neg_term = (1 - y_true) * jnn.log_sigmoid(-y_logits)
+        return -jnp.mean(pos_term + neg_term)
