@@ -65,7 +65,7 @@ The documentation will be available in `docs/_build/html`.
 - [x] CI on github actions
 - [x] Push to pypi
 - [x] set rngs from module
-- [ ] Supervised examples
+- [x] Supervised examples
 - [ ] Unsupervised examples
 - [ ] Convnets
 - [ ] Dataloader

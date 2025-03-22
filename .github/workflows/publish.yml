@@ -3,8 +3,6 @@ name: Publish Python Package
 on:
   push:
     branches: [ main, master ]
-    paths:
-      - 'pyproject.toml'
 
 jobs:
   check-version:
@@ -15,20 +13,25 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        fetch-depth: 2
+        fetch-depth: 0  # Get all history to check for tags
 
-    - name: Check if version has changed
+    - name: Check if version exists on PyPI
       id: check
       run: |
-        git diff HEAD^ HEAD -- pyproject.toml | grep 'version = '
-        if git diff HEAD^ HEAD -- pyproject.toml | grep -q 'version = '; then
-          echo "Version change detected"
-          VERSION=$(grep -m 1 'version = ' pyproject.toml | sed 's/version = //g' | sed 's/"//g' | sed "s/'//g" | xargs)
+        # Get current version from pyproject.toml
+        VERSION=$(grep -m 1 'version = ' pyproject.toml | sed 's/version = //g' | sed 's/"//g' | sed "s/'//g" | xargs)
+        echo "Current version in pyproject.toml: $VERSION"
+
+        # Check if this version already exists on PyPI
+        HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://pypi.org/pypi/seli/$VERSION/json)
+
+        if [ "$HTTP_STATUS" -eq "200" ]; then
+          echo "Version $VERSION already exists on PyPI"
+          echo "should_publish=false" >> $GITHUB_OUTPUT
+        else
+          echo "Version $VERSION does not exist on PyPI, proceeding with publish"
           echo "should_publish=true" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-        else
-          echo "No version change detected"
-          echo "should_publish=false" >> $GITHUB_OUTPUT
         fi
 
   build-and-publish:
