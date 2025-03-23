@@ -35,7 +35,7 @@ class Module(ModuleBase, name="builtin.Module"):
     functions like neural networks.
 
     Modules are PyTrees, which means they can be flattened and unflattened
-    using JAX's tree_util functions.
+    using JAXs tree_util functions.
 
     The flattening will automatically go through all attributes including slots.
     Submodules as well as dictionaries, lists, and arrays will also be
@@ -56,6 +56,12 @@ class Module(ModuleBase, name="builtin.Module"):
     def tree_flatten(
         self,
     ) -> tuple[list[jax.Array], tuple[list["PathKey"], "NodeType"]]:
+        """
+        Flatten the module into a list of arrays and a tuple for reconstructing
+        the orignal module. The tuple contains the path keys to the arrays and
+        a copy of the original module wihout the arrays.
+        This function is needed to be compatible with the Jax PyTree API.
+        """
         tree = to_tree(self)
         arrs: dict[PathKey, jax.Array] = {}
 
@@ -79,6 +85,10 @@ class Module(ModuleBase, name="builtin.Module"):
         aux_data: tuple[list["PathKey"], "NodeType"],
         arrs_vals: Sequence[jax.Array | jax.ShapeDtypeStruct],
     ) -> Self:
+        """
+        Reconstruct the module from the outputs produced by
+        `Module.tree_flatten`.
+        """
         arrs_keys, tree = aux_data
         obj = to_tree_inverse(tree)
 
@@ -90,10 +100,31 @@ class Module(ModuleBase, name="builtin.Module"):
     def __repr__(self) -> str:
         return node_repr(self)
 
-    def set_rngs(self, rngs: PRNGKeyArray | int) -> Self:
+    def set_rngs(
+        self,
+        key_or_seed: PRNGKeyArray | int,
+        collection: list[str] | None = None,
+    ) -> Self:
+        """
+        Set the state of the random number generator(s) for the module.
+
+        Parameters
+        ----------
+        key_or_seed : PRNGKeyArray | int
+            The random number generator key or seed.
+
+        collection : list[str] | None, optional
+            The collection of random number generators to set. If `None`, all
+            random number generators will be set.
+
+        Returns
+        -------
+        Self
+            The module with the updated random number generator state.
+        """
         from seli.net._key import set_rngs
 
-        return set_rngs(self, rngs)
+        return set_rngs(self, key_or_seed, collection)
 
 
 LeafType: TypeAlias = (
@@ -108,6 +139,12 @@ class ItemKey(Module, name="builtin.ItemKey"):
     """
     Key for accessing items using the [] operator.
     Used to access dictionary items by key or sequence items by index.
+
+    Attributes
+    ----------
+    key : str | int
+        The key which describes the position of the item in the dictionary or
+        list.
     """
 
     key: str | int
@@ -155,6 +192,11 @@ class AttrKey(ItemKey, name="builtin.AttrKey"):
     """
     Key for accessing object attributes using the dot operator.
     Used to access attributes of an object using the dot notation (obj.attr).
+
+    Attributes
+    ----------
+    key : str
+        The name of the attribute to access.
     """
 
     key: str
@@ -199,6 +241,12 @@ class PathKey(Module, name="builtin.PathKey"):
     Sequence of keys that enables access to nested data structures.
     Combines multiple ItemKey and AttrKey objects to navigate through nested
     objects, dictionaries, and sequences.
+
+    Attributes
+    ----------
+    path : list[ItemKey | AttrKey]
+        The sequence of keys that describe the path to the nested data
+        structure.
     """
 
     path: list[ItemKey | AttrKey]
@@ -291,56 +339,51 @@ def dfs_map(
     recursion.
 
     Parameters
-    ---
-    obj: NodeType
+    ----------
+    obj : NodeType
         The object to traverse, which can be a dictionary, list, Module, or a
         leaf value.
-        - Dictionaries must have string keys.
-        - Lists are traversed in order.
-        - Module objects have their attributes traversed alphabetically.
-        - All other types are treated as leaf values.
 
-    fun: Callable[[PathKey, NodeType], NodeType]
+    fun : Callable[[PathKey, NodeType], NodeType]
         A transformation function to apply to each element in the structure.
-        The function should accept two arguments:
-            - path: A PathKey object representing the current path
-            - x: The current element being processed
-        And return a transformed version of the element.
+        The function should return a transformed version of the element.
 
-    refs: dict[int, NodeType] | None
+        The function should accept two arguments:
+        - path: A PathKey object representing the current path
+        - x: The current element being processed
+
+    refs : dict[int, NodeType] | None, optional
         A dictionary mapping object IDs to their transformed
         versions. Used internally to track already-processed objects and
-        handle circular references. Default is None (an empty dict will be
+        handle circular references. Default is `None` (an empty dict will be
         created).
 
-    path: PathKey | None
+    path : PathKey | None, optional
         A PathKey object representing the current path in the structure. Used
-        for tracking position during recursive calls. Default is None (an empty
-        PathKey will be created).
+        for tracking position during recursive calls. Default is `None` (an
+        empty PathKey will be created).
 
-    refs_fun: Callable[[PathKey, NodeType], NodeType] | None
-        A function to handle repeated references.
+    refs_fun : Callable[[PathKey, NodeType], NodeType] | None, optional
+        A function to handle repeated references. Default is `None`.
         When an object is encountered multiple times during traversal:
-            - If refs_fun is None, the already-processed version is
-                returned directly.
-            - If refs_fun is provided, it's called with (path, processed_obj)
-                to determine what to return for the repeated reference.
-        Default is None.
+        If `refs_fun` is `None`, the already-processed version is returned
+        directly, if `refs_fun` is provided, it is called with
+        `(path, processed_obj)` to determine what to return for the repeated
+        reference.
 
     Returns
-    ---
+    -------
     A new structure with the same shape as the input, but with all elements
     transformed according to the provided function.
 
     Raises
-    ---
-    ValueError: If an object of an unsupported type is encountered.
-        Supported types are: dictionaries, lists, Module objects, and leaf
-            values.
-        TypeError: If a dictionary with non-string keys is encountered.
+    ------
+    `ValueError` If an object of an unsupported type is encountered.
+      Supported types are: dictionaries, lists, Module objects, and leaf values.
+    `TypeError` If a dictionary with non-string keys is encountered.
 
     Notes
-    ---
+    -----
     - The function preserves the structure of the original object while
       creating a new transformed copy.
     - Dictionary keys and Module attributes are processed in sorted order for
@@ -351,8 +394,8 @@ def dfs_map(
       __init__, which may bypass important initialization logic.
     - The path parameter tracks the exact location of each element in the
       nested structure using:
-        - ItemKey for dictionary keys and list indices
-        - AttrKey for Module attributes
+    - ItemKey for dictionary keys and list indices
+    - AttrKey for Module attributes
     """
     path = path or PathKey([])
     refs = refs or {}
@@ -537,6 +580,7 @@ def flat_path_dict(obj: NodeType):
 
     This function transforms a potentially nested object into a flat dictionary
     where:
+
     - Each entry is keyed by a PathKey representing its location in the original
       structure
     - Leaf values and PathKey references are preserved directly
@@ -544,13 +588,17 @@ def flat_path_dict(obj: NodeType):
       key
 
     The resulting dictionary provides a serializable, deterministic
-    representation of the object's structure that preserves paths and type
+    representation of the objects structure that preserves paths and type
     information.
 
-    Args:
-        obj: The object to convert to a flat path dictionary
+    Parameters
+    ----------
+    obj : NodeType
+        The object to convert to a flat path dictionary
 
-    Returns:
+    Returns
+    -------
+    dict[PathKey, NodeType]
         A dictionary mapping PathKey objects to values, sorted by path for
         deterministic output
     """

@@ -2,7 +2,7 @@
 This folder contains the core functionality on which the rest of the package
 is built.
 
-The core functionality is split into three parts:
+The core functionality is split into the following parts:
 
 - `_module.py`: Defines the Module class and related utilities for tree-based
   operations on module hierarchies.
@@ -14,4 +14,5 @@ The core functionality is split into three parts:
 - `_typecheck.py`: Provides a function for checking types based on the type
   hints of the function arguments. This saves a lot of boilerplate tests,
   since the type hints will automatically be checked.
+- `_utils.py`: Provides utility functions for the core functionality.
 """

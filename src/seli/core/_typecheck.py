@@ -17,5 +17,16 @@ typecheck = beartype.beartype(
 )
 
 typecheck.__doc__ = """
-Type check a function call based on its type hints, but only print warnings.
+Type check a function call based on its type hints.
+If a violation is detected, a warning is printed.
+
+Parameters
+----------
+func : Callable
+    The function to type check.
+
+Returns
+-------
+func
+    The function with the type hints checked.
 """

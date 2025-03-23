@@ -40,6 +40,11 @@ __all__ = [
 class ArrayPlaceholder(Module, name="builtin.ArrayPlaceholder"):
     """
     Placeholder for an array that will be serialized and deserialized later.
+
+    Attributes
+    ----------
+    index : int
+        The index of the array in the list of arrays that will be serialized.
     """
 
     index: int

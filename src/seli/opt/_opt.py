@@ -20,7 +20,7 @@ M = TypeVar("M", bound=NodeType)
 @typecheck
 class Optimizer(Module, name="opt.Optimizer"):
     """
-    Base class for all optimizers.
+    Base class for all gradient basedoptimizers.
     """
 
     def minimize(
@@ -30,16 +30,103 @@ class Optimizer(Module, name="opt.Optimizer"):
         *args: Any,
         **kwargs: Any,
     ) -> tuple[Self, M, Float[Array, ""]]:
+        """
+        Minimize the loss function with the given optimizer.
+
+        Parameters
+        ----------
+        loss_fn : Loss
+            The loss function to minimize.
+
+        model : NodeType
+            The model to minimize the loss function for.
+
+        args : Any
+            Additional arguments to pass to the loss function.
+
+        kwargs : Any
+            Additional keyword arguments to pass to the loss function.
+
+        Returns
+        -------
+        optimizer : Optimizer
+            The optimizer.
+
+        model : NodeType
+            The model.
+
+        loss : Float[Array, ""]
+            The loss value.
+        """
         return _minimize_jit(self, loss_fn, model, *args, **kwargs)
 
-    def call_param(self, grad: Float[Array, "*s"], **_) -> Float[Array, "*s"]:
+    def call_param(
+        self,
+        loss: Float[Array, ""],
+        key: str,
+        grad: Float[Array, "*s"],
+        param: Float[Array, "*s"],
+    ) -> Float[Array, "*s"]:
+        """
+        Process the gradients of a single parameter. This function is useful
+        for implementing custom optimizers that essentially run the same
+        function for all parameters. This is the case for most well known
+        optimizers.
+
+        Parameters
+        ----------
+        loss : Float[Array, ""]
+            The absolute loss value.
+
+        key : str
+            The key of the parameter.
+
+        grad : Float[Array, "*s"]
+            The gradients of the parameter.
+
+        param : Float[Array, "*s"]
+            The parameter values.
+
+        Returns
+        -------
+        grad : Float[Array, "*s"]
+            The processed gradients of the parameter.
+        """
         return grad
 
     def call_model(
         self,
+        model: NodeType,
+        loss: Float[Array, ""],
         grads: dict[str, Float[Array, "..."]],
-        **_,
+        values: dict[str, Float[Array, "..."]],
     ) -> dict[str, Float[Array, "..."]]:
+        """
+        Process the gradients of the whole model. The absolute loss value and
+        parameter values are also provided to the optimizer.
+
+        This function is useful for implementing custom optimizers that work
+        on the whole model at once.
+
+        Parameters
+        ----------
+        model : NodeType
+            The model to process.
+
+        loss : Float[Array, ""]
+            The absolute loss value.
+
+        grads : dict[str, Float[Array, "..."]]
+            The gradients of the model parameters.
+
+        values : dict[str, Float[Array, "..."]]
+            The parameter values of the model.
+
+        Returns
+        -------
+        grads : dict[str, Float[Array, "..."]]
+            The processed gradients of the model parameters.
+        """
         return grads
 
     def __call__(
@@ -49,6 +136,24 @@ class Optimizer(Module, name="opt.Optimizer"):
         grads: dict[str, Float[Array, "..."]],
         values: dict[str, Float[Array, "..."]],
     ) -> dict[str, Float[Array, "..."]]:
+        """
+        Process the gradients of the whole model. The absolute loss value and
+        parameter values are also provided to the optimizer.
+
+        Parameters
+        ----------
+        model : NodeType
+            The model to process.
+
+        loss : Float[Array, ""]
+            The absolute loss value.
+
+        grads : dict[str, Float[Array, "..."]]
+            The gradients of the model parameters.
+
+        values : dict[str, Float[Array, "..."]]
+            The parameter values of the model.
+        """
         grads = self.call_model(
             model=model,
             loss=loss,
@@ -85,6 +190,10 @@ def _minimize(
     *args: Any,
     **kwargs: Any,
 ) -> tuple[Optimizer, M, Float[Array, ""]]:
+    """
+    Minimize the loss function with the given optimizer. Helper function for
+    the jit compiled `Optimizer.minimize` method.
+    """
     loss_fn_wrapped = _return_model_and_loss(loss_fn)
     loss_fn_wrapped = value_and_grad(
         loss_fn_wrapped,
@@ -136,6 +245,10 @@ def _minimize_jit(
     *args: Any,
     **kwargs: Any,
 ) -> tuple[Optimizer, M, Float[Array, ""]]:
+    """
+    Minimize the loss function with the given optimizer. Helper function for
+    the jit compiled `Optimizer.minimize` method.
+    """
     return _minimize(
         optimizer,
         loss_fn,

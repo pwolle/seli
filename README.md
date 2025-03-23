@@ -20,7 +20,7 @@ Minimizing the time from idea to implementation with flexible neural networks in
 Define new layers by subclassing `seli.Module`. All modules are PyTrees.
 
 ```python
-import seli
+import seli as sl
 
 # add a name to make the module saveable
 class Linear(sl.Module, name="example:Linear");
@@ -29,7 +29,7 @@ class Linear(sl.Module, name="example:Linear");
 
         # parameters can be directly initialized
         # or an initialization method can be passed
-        self.weight = seli.Param(init=seli.init.Normal("Xavier"))
+        self.weight = sl.Param(init=sl.init.Normal("Kaiming"))
 
     def __call__(self, x):
         # the weight gets initialized on the first call
@@ -46,8 +46,8 @@ y = model(jnp.ones(8))
 A training step can be written as follows, it requires python 3.11 or newer.
 
 ``` python
-optimizer = seli.opt.Adam(1e-3)
-loss = seli.opt.MeanSquaredError()
+optimizer = sl.opt.Adam(1e-3)
+loss = sl.opt.MeanSquaredError()
 
 x = jnp.ones(32, 8)
 y = jnp.ones(32, 10)
@@ -58,10 +58,10 @@ optimizer, model, loss_value = optimizer.minimize(loss, model, y, x)
 Models can be serialized and loaded. This process is safe and does not use pickling.
 
 ``` python
-seli.save(model, "model.npz")
+sl.save(model, "model.npz")
 
 # load the model
-seli = seli.load("model.npz")
+model = sl.load("model.npz")
 assert isinstance(model, Linear)
 ```
 

@@ -4,6 +4,16 @@ This folder contains the functionality for creating and manipulating networks.
 
 from ._attention import CrossAttention, DotProductAttention
 from ._einops import Einsum, Rearrange, Reduce, Repeat
+from ._init import (
+    Constant,
+    Init,
+    Normal,
+    Ones,
+    Orthogonal,
+    TruncatedNormal,
+    Uniform,
+    Zeros,
+)
 from ._linear import Affine, Bias, Linear, Scale
 from ._norm import LayerNorm, RMSNorm
 
@@ -25,4 +35,13 @@ __all__ = [
     "Bias",
     "Linear",
     "Scale",
+    # From _init.py
+    "Init",
+    "Zeros",
+    "Ones",
+    "Constant",
+    "TruncatedNormal",
+    "Normal",
+    "Uniform",
+    "Orthogonal",
 ]

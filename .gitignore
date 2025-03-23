@@ -141,5 +141,8 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
+# API documentation
+docs/api
+
 # any .npz files anywhere in the repo
 *.npz

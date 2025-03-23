@@ -92,7 +92,20 @@ def registry_add(
 @typecheck
 def registry_str(obj: Any) -> str:
     """
-    Get the registry string for an object.
+    Get the registry string for an object. The registry string is a string
+    that uniquely identifies the object in the registry.
+    The object is looked up in the inverse registry and the name is returned
+    prefixed with `__registry__:`.
+
+    Parameters
+    ----------
+    obj : Any
+        The object to get the registry string for.
+
+    Returns
+    -------
+    str
+        The registry string for the object.
     """
     return f"__registry__:{REGISTRY_INVERSE[obj]}"
 
@@ -100,7 +113,20 @@ def registry_str(obj: Any) -> str:
 @typecheck
 def registry_obj(name: str) -> Hashable:
     """
-    Get the object for a registry string.
+    Get the object for a registry string. The registry string is a string
+    that uniquely identifies the object in the registry.
+    The registry string is converted back to the original object by looking
+    up the name in the registry.
+
+    Parameters
+    ----------
+    name : str
+        The registry string to get the object for.
+
+    Returns
+    -------
+    obj : Hashable
+        The object that is registered under the given name.
     """
     if not is_registry_str(name):
         raise ValueError(f"Invalid registry string: {name}")
@@ -116,7 +142,19 @@ def registry_obj(name: str) -> Hashable:
 @typecheck
 def is_registry_str(obj: Any) -> bool:
     """
-    Check if an object is a registry string.
+    Check if an object is a registry string. This is useful, because to avoid
+    clashes were general strings are used in a module, but should not be
+    converted to values in the registry.
+
+    Parameters
+    ----------
+    obj : Any
+        The object to check.
+
+    Returns
+    -------
+    bool
+        True if the object is a registry string, False otherwise.
     """
     return isinstance(obj, str) and obj.startswith("__registry__:")
 
