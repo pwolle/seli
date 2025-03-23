@@ -1,3 +1,10 @@
+"""
+Example of supervised learning on a 2D dataset.
+
+The dataset is generated using the `moons_dataset` function, which generates
+a dataset of two interleaving half circles.
+"""
+
 import jax.nn as jnn
 import jax.numpy as jnp
 import jax.random as jrn

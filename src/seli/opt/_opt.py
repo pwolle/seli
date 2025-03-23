@@ -157,7 +157,7 @@ class Optimizer(Module, name="opt.Optimizer"):
         grads = self.call_model(
             model=model,
             loss=loss,
-            params=values,
+            values=values,
             grads=grads,
         )
 
