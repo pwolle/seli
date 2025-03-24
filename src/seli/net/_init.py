@@ -10,13 +10,13 @@ from seli.core._module import Module
 
 __all__ = [
     "Init",
-    "Zeros",
-    "Ones",
-    "Constant",
-    "TruncatedNormal",
-    "Normal",
-    "Uniform",
-    "Orthogonal",
+    "InitZeros",
+    "InitOnes",
+    "InitConstant",
+    "InitTruncatedNormal",
+    "InitNormal",
+    "InitUniform",
+    "InitOrthogonal",
 ]
 
 
@@ -38,7 +38,7 @@ class Init(Module, name="net.init.Initializer"):
         raise NotImplementedError
 
 
-class Zeros(Init, name="net.init.Zeros"):
+class InitZeros(Init, name="net.init.Zeros"):
     """
     Initializes all values to zero.
     """
@@ -52,7 +52,7 @@ class Zeros(Init, name="net.init.Zeros"):
         return jnp.zeros(shape, dtype)
 
 
-class Ones(Init, name="net.init.Ones"):
+class InitOnes(Init, name="net.init.Ones"):
     """
     Initializes all values to one.
     """
@@ -66,7 +66,7 @@ class Ones(Init, name="net.init.Ones"):
         return jnp.ones(shape, dtype)
 
 
-class Constant(Init, name="net.init.Constant"):
+class InitConstant(Init, name="net.init.Constant"):
     """
     Initializes all values to a constant value.
     """
@@ -83,7 +83,7 @@ class Constant(Init, name="net.init.Constant"):
         return jnp.full(shape, self.value, dtype)
 
 
-class TruncatedNormal(Init, name="net.init.TruncatedNormal"):
+class InitTruncatedNormal(Init, name="net.init.TruncatedNormal"):
     """
     Initializes values from a truncated normal distribution.
     """
@@ -119,7 +119,7 @@ class TruncatedNormal(Init, name="net.init.TruncatedNormal"):
         )
 
 
-class Normal(Init, name="net.init.Normal"):
+class InitNormal(Init, name="net.init.Normal"):
     """
     Initializes values from a normal distribution. The following automatic
     scaling methods are supported:
@@ -180,7 +180,7 @@ class Normal(Init, name="net.init.Normal"):
         return w * self.scale + self.shift
 
 
-class Uniform(Init, name="net.init.Uniform"):
+class InitUniform(Init, name="net.init.Uniform"):
     """
     Initializes values from a uniform distribution. The following automatic
     scaling methods are supported:
@@ -241,7 +241,7 @@ class Uniform(Init, name="net.init.Uniform"):
         return w * self.scale + self.shift
 
 
-class Orthogonal(Init, name="net.init.Orthogonal"):
+class InitOrthogonal(Init, name="net.init.Orthogonal"):
     """
     Initialize weights as an orthogonal matrices.
     """

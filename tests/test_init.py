@@ -3,13 +3,13 @@ import jax.numpy as jnp
 import pytest
 
 from seli.net._init import (
-    Constant,
     Init,
-    Normal,
-    Orthogonal,
-    TruncatedNormal,
-    Uniform,
-    Zeros,
+    InitConstant,
+    InitNormal,
+    InitOrthogonal,
+    InitTruncatedNormal,
+    InitUniform,
+    InitZeros,
 )
 
 
@@ -20,7 +20,7 @@ class TestZeros:
         shape = (3, 4)
         dtype = jnp.float32
 
-        initializer = Zeros()
+        initializer = InitZeros()
         result = initializer(key, shape, dtype)
 
         assert result.shape == shape
@@ -35,7 +35,7 @@ class TestConstant:
         shape = (2, 5)
         dtype = jnp.float32
 
-        initializer = Constant()  # default value=1.0
+        initializer = InitConstant()  # default value=1.0
         result = initializer(key, shape, dtype)
 
         assert result.shape == shape
@@ -49,7 +49,7 @@ class TestConstant:
         dtype = jnp.float32
         value = 3.14
 
-        initializer = Constant(value=value)
+        initializer = InitConstant(value=value)
         result = initializer(key, shape, dtype)
 
         assert result.shape == shape
@@ -64,7 +64,7 @@ class TestTruncatedNormal:
         shape = (1000, 1000)  # Large shape for statistical testing
         dtype = jnp.float32
 
-        initializer = TruncatedNormal()  # default minv=-1.0, maxv=1.0
+        initializer = InitTruncatedNormal()  # default minv=-1.0, maxv=1.0
         result = initializer(key, shape, dtype)
 
         assert result.shape == shape
@@ -83,7 +83,7 @@ class TestTruncatedNormal:
         minv = 0.0
         maxv = 2.0
 
-        initializer = TruncatedNormal(minv=minv, maxv=maxv)
+        initializer = InitTruncatedNormal(minv=minv, maxv=maxv)
         result = initializer(key, shape, dtype)
 
         assert result.shape == shape
@@ -100,7 +100,7 @@ class TestTruncatedNormal:
         shift = 5.0
         scale = 2.0
 
-        initializer = TruncatedNormal(shift=shift, scale=scale)
+        initializer = InitTruncatedNormal(shift=shift, scale=scale)
         result = initializer(key, shape, dtype)
 
         assert result.shape == shape
@@ -119,7 +119,7 @@ class TestNormal:
         shape = (1000, 1000)
         dtype = jnp.float32
 
-        initializer = Normal(init="Unit")
+        initializer = InitNormal(init="Unit")
         result = initializer(key, shape, dtype)
 
         assert result.shape == shape
@@ -137,7 +137,7 @@ class TestNormal:
         shape = (100, 100)
         dtype = jnp.float32
 
-        initializer = Normal(init=init_method)
+        initializer = InitNormal(init=init_method)
         result = initializer(key, shape, dtype)
 
         assert result.shape == shape
@@ -151,7 +151,7 @@ class TestNormal:
         shift = 3.0
         scale = 2.0
 
-        initializer = Normal(shift=shift, scale=scale)
+        initializer = InitNormal(shift=shift, scale=scale)
         result = initializer(key, shape, dtype)
 
         assert result.shape == shape
@@ -169,7 +169,7 @@ class TestUniform:
         shape = (1000, 1000)
         dtype = jnp.float32
 
-        initializer = Uniform(init="Unit")
+        initializer = InitUniform(init="Unit")
         result = initializer(key, shape, dtype)
 
         assert result.shape == shape
@@ -187,7 +187,7 @@ class TestUniform:
         shape = (100, 100)
         dtype = jnp.float32
 
-        initializer = Uniform(init=init_method)
+        initializer = InitUniform(init=init_method)
         result = initializer(key, shape, dtype)
 
         assert result.shape == shape
@@ -201,7 +201,7 @@ class TestUniform:
         shift = 3.0
         scale = 2.0
 
-        initializer = Uniform(shift=shift, scale=scale)
+        initializer = InitUniform(shift=shift, scale=scale)
         result = initializer(key, shape, dtype)
 
         assert result.shape == shape
@@ -217,7 +217,7 @@ class TestOrthogonal:
         shape = (10, 10)  # Square matrix for simplicity
         dtype = jnp.float32
 
-        initializer = Orthogonal()
+        initializer = InitOrthogonal()
         result = initializer(key, shape, dtype)
 
         assert result.shape == shape
@@ -233,7 +233,7 @@ class TestOrthogonal:
         shape = (20, 10)  # Rectangular matrix
         dtype = jnp.float32
 
-        initializer = Orthogonal()
+        initializer = InitOrthogonal()
         result = initializer(key, shape, dtype)
 
         assert result.shape == shape
@@ -250,7 +250,7 @@ class TestOrthogonal:
         dtype = jnp.float32
         scale = 2.0
 
-        initializer = Orthogonal(scale=scale)
+        initializer = InitOrthogonal(scale=scale)
         result = initializer(key, shape, dtype)
 
         assert result.shape == shape
@@ -278,7 +278,7 @@ def test_invalid_normal_init():
     shape = (3, 4)
     dtype = jnp.float32
 
-    initializer = Normal(init="InvalidMethod")  # Invalid method
+    initializer = InitNormal(init="InvalidMethod")  # Invalid method
     with pytest.raises(ValueError):
         initializer(key, shape, dtype)
 
@@ -289,6 +289,6 @@ def test_invalid_uniform_init():
     shape = (3, 4)
     dtype = jnp.float32
 
-    initializer = Uniform(init="InvalidMethod")  # Invalid method
+    initializer = InitUniform(init="InvalidMethod")  # Invalid method
     with pytest.raises(ValueError):
         initializer(key, shape, dtype)

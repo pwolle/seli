@@ -66,9 +66,20 @@ The documentation will be available in `docs/_build/html`.
 - [x] Push to pypi
 - [x] set rngs from module
 - [x] Supervised examples
+    - [x] Classification
+    - [x] Regression
+
+- [ ] Return loss from optimizer
 - [ ] Combination layers
 - [ ] Unsupervised examples
+    - [ ] Autoencoders
+    - [ ] VAEs
+    - [ ] Normalizing Flows
+    - [ ] Diffusion models
+    - [ ] Flow matching
+    - [ ] Score matching
+    - [ ] GANs
 - [ ] Convnets
 - [ ] Dataloader
 - [ ] Datasets
-- [ ] Training loop/trainer
+- [ ] Training loop/trainer?

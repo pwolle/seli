@@ -7,7 +7,7 @@ from jaxtyping import Array, Float, jaxtyped
 
 from seli.core._module import Module
 from seli.core._typecheck import typecheck
-from seli.net._init import Ones, Zeros
+from seli.net._init import InitOnes, InitZeros
 from seli.net._param import Param
 
 __all__ = [
@@ -41,8 +41,8 @@ class LayerNorm(Module, name="net.LayerNorm"):
         self.eps = eps
         self.offset = offset
 
-        self.weight = Param(init=Zeros())
-        self.bias = Param(init=Zeros())
+        self.weight = Param(init=InitZeros())
+        self.bias = Param(init=InitZeros())
 
     @jaxtyped(typechecker=typecheck)
     def __call__(
@@ -88,8 +88,8 @@ class RMSNorm(Module, name="net.RMSNorm"):
         self.eps = eps
         self.offset = offset
 
-        self.weight = Param(init=Ones())
-        self.bias = Param(init=Zeros())
+        self.weight = Param(init=InitOnes())
+        self.bias = Param(init=InitZeros())
 
     @jaxtyped(typechecker=typecheck)
     def __call__(

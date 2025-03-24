@@ -31,3 +31,28 @@ def moons_dataset(key, n: int):
 
     x = x + jrn.normal(key_noise, (n, 2)) * 0.2
     return x, y
+
+
+@seli.jit
+def two_gaussians(key, n: int, scale: float = 0.5):
+    """
+    Generate a dataset of points on two gaussians.
+    """
+    key_noise, key_mode = jrn.split(key)
+    z = jrn.normal(key_noise, (n,))
+    r = jrn.rademacher(key_mode, (n,))
+    return z * scale + r
+
+
+def two_gaussians_likelihood(x, scale: float = 0.5):
+    """
+    Compute the likelihood of the two gaussians.
+    """
+    log_Z = -0.5 * jnp.log(2 * jnp.pi * scale**2)
+    log_likelihood_1 = -0.5 * ((x + 1) / scale) ** 2 + log_Z
+    log_likelihood_2 = -0.5 * ((x - 1) / scale) ** 2 + log_Z
+
+    prob_1 = jnp.exp(log_likelihood_1)
+    prob_2 = jnp.exp(log_likelihood_2)
+
+    return 0.5 * (prob_1 + prob_2)

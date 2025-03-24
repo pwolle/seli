@@ -2,7 +2,7 @@ import jax
 import jax.numpy as jnp
 
 from seli.core._module import Module
-from seli.net._init import Zeros
+from seli.net._init import InitZeros
 from seli.net._key import set_rngs
 from seli.net._param import Param
 from seli.opt._grad import get_arrays, grad, set_arrays, value_and_grad
@@ -10,9 +10,9 @@ from seli.opt._grad import get_arrays, grad, set_arrays, value_and_grad
 
 class SimpleModule(Module, name="test_grad.SimpleModule"):
     def __init__(self):
-        self.param1 = Param(init=Zeros(), collection="param")
-        self.param2 = Param(init=Zeros(), collection="param")
-        self.param3 = Param(init=Zeros(), collection="other")
+        self.param1 = Param(init=InitZeros(), collection="param")
+        self.param2 = Param(init=InitZeros(), collection="param")
+        self.param3 = Param(init=InitZeros(), collection="other")
 
     def init(self):
         # Call to initialize with shapes

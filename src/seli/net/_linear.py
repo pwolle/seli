@@ -6,7 +6,7 @@ from jaxtyping import Array, Float, jaxtyped
 
 from seli.core._module import Module
 from seli.core._typecheck import typecheck
-from seli.net._init import Uniform, Zeros
+from seli.net._init import InitUniform, InitZeros
 from seli.net._param import Param
 
 __all__ = [
@@ -32,7 +32,7 @@ class Linear(Module, name="net.Linear"):
 
     def __init__(self, dim: int) -> None:
         self.dim = dim
-        self.weight = Param(init=Uniform(init="Glorot"))
+        self.weight = Param(init=InitUniform(init="Glorot"))
 
     @jaxtyped(typechecker=typecheck)
     def __call__(
@@ -60,7 +60,7 @@ class Bias(Module, name="net.Bias"):
     """
 
     def __init__(self) -> None:
-        self.bias = Param(init=Zeros())
+        self.bias = Param(init=InitZeros())
 
     @jaxtyped(typechecker=typecheck)
     def __call__(
@@ -122,7 +122,7 @@ class Scale(Module, name="net.Scale"):
 
     def __init__(self, offset: float = 1) -> None:
         self.offset = offset
-        self.scale = Param(init=Zeros())
+        self.scale = Param(init=InitZeros())
 
     @jaxtyped(typechecker=typecheck)
     def __call__(
