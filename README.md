@@ -18,6 +18,7 @@ Minimizing the time from idea to implementation with flexible neural networks in
 ## Quick Example
 
 Define new layers by subclassing `seli.Module`. All modules are PyTrees.
+Check out the [examples](examples) for more sophisticated usage.
 
 ```python
 import seli as sl
