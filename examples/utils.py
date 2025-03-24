@@ -29,5 +29,5 @@ def moons_dataset(key, n: int):
     x = x.at[:, 0].add(y - 0.5)
     x = x.at[:, 1].add((y - 0.5) * 0.2)
 
-    x = x + jrn.normal(key_noise, (n, 2)) * 0.1
+    x = x + jrn.normal(key_noise, (n, 2)) * 0.2
     return x, y

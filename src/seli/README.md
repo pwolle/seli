@@ -66,6 +66,7 @@ The documentation will be available in `docs/_build/html`.
 - [x] Push to pypi
 - [x] set rngs from module
 - [x] Supervised examples
+- [ ] Combination layers
 - [ ] Unsupervised examples
 - [ ] Convnets
 - [ ] Dataloader

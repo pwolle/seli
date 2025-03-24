@@ -2,6 +2,7 @@
 Example of classification on a 2D dataset using a simple 3 layer MLP.
 """
 
+# %%
 import jax.nn as jnn
 import jax.numpy as jnp
 import jax.random as jrn
@@ -41,7 +42,7 @@ class MLP(seli.Module):
         for layer in self.layers2:
             x = layer(x)
 
-        return x
+        return x[..., 0]
 
 
 # create the model and set the random number generator seed for reproducibility
@@ -96,8 +97,8 @@ fig, axs = plt.subplot_mosaic(
 for i, iteration in enumerate(titles):
     ax, pred = axs[iteration], predictions[iteration]
 
-    # normalize predictions to be between -1 and 1
-    pred = jnn.tanh(pred * 0.05)
+    # normalize predictions to make the contour plot more informative
+    pred = jnn.tanh(pred * 0.1)
 
     norm = mcolors.TwoSlopeNorm(
         vmin=pred.min(),
