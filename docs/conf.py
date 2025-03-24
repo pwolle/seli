@@ -28,12 +28,11 @@ html_theme_options = {
     "use_download_button": False,
     "use_fullscreen_button": False,
     "logo": {
-        "text": "<span style='font-size: 2em;'>Seli</span>",
+        "text": "<span style='font-size: 2em;'>Seli Docs</span>",
     },
 }
 
-
-html_title = "Seli Docs"
+html_title = ""
 
 # static files
 html_static_path = ["_static"]
@@ -46,6 +45,8 @@ html_css_files = [
     "custom.css",
 ]
 
+html_logo = "_static/logo_red_wide.png"
+
 # --- Extensions configuration -------------------------------------------------
 extensions = [
     "sphinx.ext.autodoc",
@@ -56,6 +57,7 @@ extensions = [
     "sphinx_toolbox.github",
     "sphinx_automodapi.automodapi",
     "myst_parser",
+    "sphinx_favicon",
 ]
 
 # Autodoc configuration
@@ -74,3 +76,13 @@ myst_enable_extensions = [
     "deflist",
 ]
 myst_heading_anchors = 3
+
+
+favicons = [
+    "favicon-16x16.png",
+    "favicon-32x32.png",
+    "android-chrome-192x192.png",
+    "android-chrome-512x512.png",
+    "apple-touch-icon.png",
+    "favicon.ico",
+]

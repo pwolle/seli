@@ -81,15 +81,15 @@ class Optimizer(Module, name="opt.Optimizer"):
         key : str
             The key of the parameter.
 
-        grad : Float[Array, "*s"]
+        grad : Float[Array]
             The gradients of the parameter.
 
-        param : Float[Array, "*s"]
+        param : Float[Array]
             The parameter values.
 
         Returns
         -------
-        grad : Float[Array, "*s"]
+        grad : Float[Array]
             The processed gradients of the parameter.
         """
         return grad
