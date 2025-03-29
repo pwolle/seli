@@ -53,6 +53,10 @@ class ModuleBase:
         if name is not None:
             registry_add(name, cls, overwrite=overwrite)
 
+        if hasattr(cls, "__slots__"):
+            error = f"Module {cls} has __slots__, which is not supported"
+            raise TypeError(error)
+
 
 @typecheck
 def registry_add(

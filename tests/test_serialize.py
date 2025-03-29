@@ -273,28 +273,28 @@ def test_serialize_list_of_modules():
         np.testing.assert_array_equal(module.array, modules[i].array)
 
 
-def test_serialize_class_with_slots():
-    class SlotsModule(Module, name="test.SlotsModule"):
-        __slots__ = ["value", "array"]
+# def test_serialize_class_with_slots():
+#     class SlotsModule(Module, name="test.SlotsModule"):
+#         __slots__ = ["value", "array"]
 
-        def __init__(self, value, array):
-            self.value = value
-            self.array = array
+#         def __init__(self, value, array):
+#             self.value = value
+#             self.array = array
 
-    module = SlotsModule(42, jnp.array([1, 2, 3]))
+#     module = SlotsModule(42, jnp.array([1, 2, 3]))
 
-    arrays, json_str = to_arrays_and_json(module)
+#     arrays, json_str = to_arrays_and_json(module)
 
-    # There should be 1 array
-    assert len(arrays) == 1
+#     # There should be 1 array
+#     assert len(arrays) == 1
 
-    # Deserialize
-    result = from_arrays_and_json(arrays, json_str)
+#     # Deserialize
+#     result = from_arrays_and_json(arrays, json_str)
 
-    # Check values
-    assert isinstance(result, SlotsModule)
-    assert result.value == module.value
-    np.testing.assert_array_equal(result.array, module.array)
+#     # Check values
+#     assert isinstance(result, SlotsModule)
+#     assert result.value == module.value
+#     np.testing.assert_array_equal(result.array, module.array)
 
 
 def test_serialize_different_array_dtypes():

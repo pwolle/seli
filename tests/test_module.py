@@ -218,29 +218,29 @@ def test_dfs_map_complex_nested_structure():
     assert result["none_value"] is None
 
 
-def test_dfs_map_with_custom_module_attributes():
-    class CustomModule(Module, name="test_module.CustomModule"):
-        __slots__ = ["slot_attr"]
+# def test_dfs_map_with_custom_module_attributes():
+#     class CustomModule(Module, name="test_module.CustomModule"):
+#         __slots__ = ["slot_attr"]
 
-        def __init__(self):
-            self.dict_attr = 1
-            self.slot_attr = 2
-            self.nested = {"a": 3}
+#         def __init__(self):
+#             self.dict_attr = 1
+#             self.slot_attr = 2
+#             self.nested = {"a": 3}
 
-    module = CustomModule()
+#     module = CustomModule()
 
-    # Double all integer values
-    def double_ints(_, x):
-        if isinstance(x, int):
-            return x * 2
-        return x
+#     # Double all integer values
+#     def double_ints(_, x):
+#         if isinstance(x, int):
+#             return x * 2
+#         return x
 
-    result = dfs_map(module, double_ints)
+#     result = dfs_map(module, double_ints)
 
-    # Check that the attributes were processed correctly
-    assert result.dict_attr == 2  # doubled
-    assert result.slot_attr == 4  # doubled
-    assert result.nested["a"] == 6  # doubled
+#     # Check that the attributes were processed correctly
+#     assert result.dict_attr == 2  # doubled
+#     assert result.slot_attr == 4  # doubled
+#     assert result.nested["a"] == 6  # doubled
 
 
 def test_dfs_map_with_nested_modules():

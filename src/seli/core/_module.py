@@ -459,7 +459,8 @@ def dfs_map(
             keys.extend(obj_fun.__dict__.keys())
 
         if hasattr(obj_fun, "__slots__"):
-            keys.extend(obj_fun.__slots__)
+            error = f"Module {obj_fun} has __slots__, which is not supported"
+            raise TypeError(error)
 
         obj_new = object.__new__(type(obj_fun))
 
@@ -689,9 +690,6 @@ def node_repr(obj: NodeType, /, indent: str = " " * 4) -> str:
 
         if hasattr(obj, "__dict__"):
             keys.extend(obj.__dict__.keys())
-
-        if hasattr(obj, "__slots__"):
-            keys.extend(obj.__slots__)
 
         if not keys:
             return f"{obj.__class__.__name__}()"

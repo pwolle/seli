@@ -12,6 +12,7 @@ from seli.core._module import (
     to_tree,
     to_tree_inverse,
 )
+from seli.core._property import cached_property
 from seli.core._registry import (
     is_registry_str,
     registry_add,
@@ -58,4 +59,6 @@ __all__ = [
     "opt",
     # From _jit.py
     "jit",
+    # From _property.py
+    "cached_property",
 ]
