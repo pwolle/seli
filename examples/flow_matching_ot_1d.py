@@ -201,4 +201,8 @@ fig = plot_1d_generative_model(
     likelihood_model,
 )
 fig.suptitle("Optimal Transport Flow Matching")
-fig.savefig(get_plot_path("flow_matching_ot_1d.png"))
+fig.savefig(
+    get_plot_path("flow_matching_ot_1d.png"),
+    dpi=256,
+    bbox_inches="tight",
+)

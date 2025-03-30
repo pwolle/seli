@@ -149,18 +149,18 @@ for _ in trange(10000 // 5, desc="Training"):
 
 
 # plot the generated samples and the true data
-fig, ax = plt.subplots(figsize=(5, 5))
+fig, ax = plt.subplots(figsize=(4, 4))
 
 ax.hist(
     [
-        generator.sample(key, 1024 * 32),
         two_gaussians(key, 1024 * 32),
+        generator.sample(key, 1024 * 32),
     ],
     bins=64,
     density=True,
-    label=["Generator", "True"],
+    label=["Data\nsamples", "Generator\nsamples"],
     histtype="step",
-    color=["tab:red", "tab:blue"],
+    color=["tab:blue", "tab:red"],
 )
 ax.set_xlim(-3, 3)
 ax.legend(frameon=False, ncol=2)
@@ -170,4 +170,8 @@ ax.set_xlabel("x")
 ax.set_ylabel("density")
 
 sns.despine(ax=ax)
-fig.savefig(get_plot_path("generative_adversarial_net_1d.png"))
+fig.savefig(
+    get_plot_path("generative_adversarial_net_1d.png"),
+    dpi=256,
+    bbox_inches="tight",
+)

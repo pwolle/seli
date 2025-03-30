@@ -75,7 +75,7 @@ x_lin_err = jnp.linspace(x_min, x_max, 128)
 
 y_pred = model(x_lin)
 
-fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+fig, ax = plt.subplots(1, 1, figsize=(4, 4))
 
 # plot the data
 ax.scatter(x_data, y_data, label="data", s=10, color="tab:blue")

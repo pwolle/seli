@@ -72,20 +72,22 @@ def plot_1d_generative_model(
     """
     Plot the results of a 1D generative model.
     """
-    fig, (ax_loss, ax_samples) = plt.subplots(1, 2, figsize=(10, 5))
+    fig, (ax_loss, ax_samples) = plt.subplots(1, 2, figsize=(8, 4))
 
     ax_loss.plot(losses)
     ax_loss.set_yscale("log")
+    ax_loss.set_xscale("symlog", linthresh=100)
 
     ax_loss.set_xlim(0, len(losses))
     ax_loss.set_xlabel("Iteration")
-    ax_loss.set_ylabel("log likelihood")
+    ax_loss.set_ylabel("loss")
+    sns.despine(ax=ax_loss)
 
     ax_samples.hist(
         [samples, samples_model],
         bins=32,
         density=True,
-        label=["Data samples", "Model samples"],
+        label=["Data\nsamples", "Model\nsamples"],
         histtype="step",
         color=["tab:blue", "tab:red"],
     )
@@ -93,20 +95,23 @@ def plot_1d_generative_model(
         ax_samples.plot(
             x,
             likelihood,
-            label="True density",
+            label="True\ndensity",
             color="tab:blue",
         )
         ax_samples.plot(
             x,
             likelihood_model,
-            label="Model density",
+            label="Model\ndensity",
             color="tab:red",
         )
+        ax_samples.set_xlim(x.min(), x.max())
 
-    ax_samples.set_xlim(x.min(), x.max())
     ax_samples.set_xlabel("x")
     ax_samples.set_ylabel("density")
-    ax_samples.legend(frameon=False, ncol=2)
+    ax_samples.legend(frameon=False, ncol=2, loc="upper center")
+
+    _, y_max = ax_samples.get_ylim()
+    ax_samples.set_ylim(0, y_max * 1.2)
 
     sns.despine(ax=ax_samples)
     return fig

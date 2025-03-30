@@ -93,8 +93,8 @@ def compute_trajectory(optimizer, start):
 optimizers = {
     "SGD": seli.opt.SGD(1e-3),
     "Momentum": seli.opt.Momentum(1e-3, 0.9),
-    "RMSProp": seli.opt.RMSProp(4e-3, 0.999, 1e-12),
-    "Adagrad": seli.opt.Adagrad(1e-3, 1e-8),
+    "RMSProp": seli.opt.RMSProp(1e-2, 0.99),
+    "Adagrad": seli.opt.Adagrad(1e-1),
     "Nesterov": seli.opt.Nesterov(1e-3, 0.9),
     "Adam": seli.opt.Adam(1e-1, 0.9, 0.999, 1e-12),
 }
@@ -120,7 +120,7 @@ loss_values = rosenbrock_elementwise(xy)
 # otherwise the contour plot will be dominated by the narrow valley
 loss_values = jnp.arcsinh(loss_values**0.5)
 
-fig, ax = plt.subplots(figsize=(6, 6))
+fig, ax = plt.subplots(figsize=(4, 4))
 
 ax.contourf(
     xi,
