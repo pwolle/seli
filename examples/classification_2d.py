@@ -17,7 +17,7 @@ import seli
 # generate the 2D dataset
 # this two moons dataset is a classic toy dataset for binary classification
 # it contains two interleved moon shaped clusters of points, which are
-# easily separable by a genarl model, but not linearly separable by a linear
+# easily separable by a general model, but not linearly separable by a linear
 # model
 x_data, y_data = moons_dataset(jrn.PRNGKey(0), 128)
 

@@ -1,14 +1,26 @@
-# Seli
+<div align="center">
+  <table border="0">
+    <tr>
+      <td><img src="assets/logo_red_1to1.png" alt="Seli Logo" width="100"/></td>
+      <td><span style="font-size: 72px; font-weight: bold; margin: 0; text-decoration: none; display: inline-block; vertical-align: middle;">Seli</span></td>
+    </tr>
+  </table>
+</div>
+
+# Fast Neural Networks Research in Jax
 
 Minimizing the time from idea to implementation with flexible neural networks in seli.
 
 [![Python Tests](https://github.com/pwolle/seli/actions/workflows/pytest.yml/badge.svg)](https://github.com/pwolle/seli/actions/workflows/pytest.yml)
 [![PyPI version](https://img.shields.io/pypi/v/seli.svg)](https://pypi.org/project/seli/)
+[![Documentation Status](https://readthedocs.org/projects/seli/badge/?version=latest)](https://seli.readthedocs.io/en/latest/?badge=latest)
+[![Downloads](https://pepy.tech/badge/seli/month)](https://pepy.tech/project/seli)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 
 ## Features
 - Mutable modules for quick and dirty modifications via Module
-- Serialization of modules via @saveable, save, and load
+- Serialization of modules via `@saveable`, `save`, and `load`
 - Systematically modifying modules by traversing nested modules
 - Safely handling shared/cyclical references and static arguments through `seli.jit`
 - Commonly used NN layers and optimizers are included
@@ -20,23 +32,20 @@ Minimizing the time from idea to implementation with flexible neural networks in
 Define new layers by subclassing `seli.Module`. All modules are PyTrees.
 Check out the [examples](examples) for more sophisticated usage.
 
-```python
-import seli as sl
-
+``` python
 # add a name to make the module saveable
-class Linear(sl.Module, name="example:Linear");
+class Linear(seli.Module, name="example:Linear");
     def __init__(self, dim: int)
         self.dim = dim
 
         # parameters can be directly initialized
         # or an initialization method can be passed
-        self.weight = sl.Param(init=sl.init.Normal("Kaiming"))
+        self.weight = seli.netParam(init=seli.net.InitNormal("He"))
 
     def __call__(self, x):
         # the weight gets initialized on the first call
         # by providing the shape, the value is stored
         return x @ self.weight((x.shape[-1], self.dim))
-
 
 # set the rngs for all submodules at once
 # no code for passing rngs around is needed
@@ -47,11 +56,11 @@ y = model(jnp.ones(8))
 A training step can be written as follows, it requires python 3.11 or newer.
 
 ``` python
-optimizer = sl.opt.Adam(1e-3)
-loss = sl.opt.MeanSquaredError()
+optimizer = seli.opt.Adam(1e-3)
+loss = seli.opt.MeanSquaredError()
 
-x = jnp.ones(32, 8)
-y = jnp.ones(32, 10)
+x = jax.numpy.ones(32, 8)
+y = jax.numpy.ones(32, 10)
 
 optimizer, model, loss_value = optimizer.minimize(loss, model, y, x)
 ```
@@ -59,10 +68,10 @@ optimizer, model, loss_value = optimizer.minimize(loss, model, y, x)
 Models can be serialized and loaded. This process is safe and does not use pickling.
 
 ``` python
-sl.save(model, "model.npz")
+seli.save(model, "model.npz")
 
 # load the model
-model = sl.load("model.npz")
+model = seli.load("model.npz")
 assert isinstance(model, Linear)
 ```
 
