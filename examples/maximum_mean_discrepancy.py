@@ -1,3 +1,20 @@
+"""
+Generate samples from a 1D distribution by training a model to match the
+empirical distribution of the data.
+
+The maximum mean discrepancy is a method to measure the similarity between
+two distributions. It works by embedding the distributions into a reproducing
+kernel Hilbert space (RKHS) and measuring the distance between these
+embeddings.
+
+This approach allows us to compare distributions without explicitly
+estimating their densities, making it particularly useful for high-dimensional
+data or when we only have samples from the distributions. The MMD is zero if
+and only if the two distributions are identical, providing a principled way to
+train generative models by minimizing the discrepancy between generated and
+real data distributions.
+"""
+
 import jax
 import jax.nn as jnn
 import jax.numpy as jnp
@@ -12,6 +29,7 @@ from utils import (
 import seli
 
 
+# define the model, a simple feedforward network
 class Model(seli.Module):
     def __init__(self, dim: int = 32):
         self.layers = [
@@ -37,19 +55,29 @@ class Model(seli.Module):
         return self(self.prior(key, batch_size))
 
 
+# the rbf kernel is a popular choice for the kernel function
+# it is defined as exp(-||x - y||^2 / (2 * sigma^2)), this is a "characteristic"
+# kernel, i.e. choosing this kernel ensures that MMD is zero if and only if
+# the two distributions are identical
 def rbf_kernel(x, y, sigma: float = 1.0):
     dist = jnp.sum(jnp.square(x - y))
     return jnp.exp(-dist / (2 * sigma**2))
 
 
+# compute the maximum mean discrepancy between two empirical distributions
 def maximum_mean_discrepancy(x, y, kernel):
+    # vectorize the kernel function two times to get a function which returns
+    # the kernel matrix between all pairs of points in x and y
     k_fn = jax.vmap(jax.vmap(kernel, in_axes=(0, None)), in_axes=(None, 0))
     k_xx = k_fn(x, x)
     k_xy = k_fn(x, y)
     k_yy = k_fn(y, y)
+
+    # compute the MMD = E[k(x, x)] + E[k(y, y)] - 2 E[k(x, y)]
     return jnp.mean(k_xx) + jnp.mean(k_yy) - 2 * jnp.mean(k_xy)
 
 
+# wrap it in a loss class for optimization
 class MaximumMeanDiscrepancy(seli.opt.Loss):
     def __init__(self, sigma: float = 0.1):
         self.sigma = sigma
@@ -64,6 +92,7 @@ class MaximumMeanDiscrepancy(seli.opt.Loss):
         )
 
 
+# create the model and loss and train the model
 model = Model().set_rngs(42)
 loss = MaximumMeanDiscrepancy()
 opt = seli.opt.Adam(1e-3)
