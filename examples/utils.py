@@ -2,6 +2,9 @@ import os
 
 import jax.numpy as jnp
 import jax.random as jrn
+import matplotlib.pyplot as plt
+import seaborn as sns
+from jax import Array
 
 import seli
 
@@ -56,3 +59,54 @@ def two_gaussians_likelihood(x, scale: float = 0.5):
     prob_2 = jnp.exp(log_likelihood_2)
 
     return 0.5 * (prob_1 + prob_2)
+
+
+def plot_1d_generative_model(
+    losses: list[float],
+    samples: Array,
+    samples_model: Array,
+    x: Array | None = None,
+    likelihood: Array | None = None,
+    likelihood_model: Array | None = None,
+):
+    """
+    Plot the results of a 1D generative model.
+    """
+    fig, (ax_loss, ax_samples) = plt.subplots(1, 2, figsize=(10, 5))
+
+    ax_loss.plot(losses)
+    ax_loss.set_yscale("log")
+
+    ax_loss.set_xlim(0, len(losses))
+    ax_loss.set_xlabel("Iteration")
+    ax_loss.set_ylabel("log likelihood")
+
+    ax_samples.hist(
+        [samples, samples_model],
+        bins=32,
+        density=True,
+        label=["Data samples", "Model samples"],
+        histtype="step",
+        color=["tab:blue", "tab:red"],
+    )
+    if not any(i is None for i in [x, likelihood, likelihood_model]):
+        ax_samples.plot(
+            x,
+            likelihood,
+            label="True density",
+            color="tab:blue",
+        )
+        ax_samples.plot(
+            x,
+            likelihood_model,
+            label="Model density",
+            color="tab:red",
+        )
+
+    ax_samples.set_xlim(x.min(), x.max())
+    ax_samples.set_xlabel("x")
+    ax_samples.set_ylabel("density")
+    ax_samples.legend(frameon=False, ncol=2)
+
+    sns.despine(ax=ax_samples)
+    return fig

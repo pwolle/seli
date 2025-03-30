@@ -27,10 +27,13 @@ import jax
 import jax.nn as jnn
 import jax.numpy as jnp
 import jax.random as jrn
-import matplotlib.pyplot as plt
-import seaborn as sns
 from tqdm import trange
-from utils import get_plot_path, two_gaussians, two_gaussians_likelihood
+from utils import (
+    get_plot_path,
+    plot_1d_generative_model,
+    two_gaussians,
+    two_gaussians_likelihood,
+)
 
 import seli
 
@@ -69,8 +72,8 @@ class Flow(seli.Module):
         def body_fun(_, carry):
             t, x_t = carry
             t = t + dt
-            v_t = self(x_t, t)
-            x_t = x_t + v_t * dt
+            velocity_t = self(x_t, t)
+            x_t = x_t + velocity_t * dt
             return (t, x_t)
 
         t, x_t = jax.lax.fori_loop(0, num_steps, body_fun, (t, x_t))
@@ -86,23 +89,43 @@ class Flow(seli.Module):
         t = jnp.zeros((source.shape[0],))
         dt = 1 / num_steps
         x_t = source
-        ll = self.prior_log_likelihood(source)
 
-        model_value_and_grad = jax.vmap(jax.value_and_grad(self))
+        # the initial log-likelihood is the log-likelihood of the source
+        # distribution
+        log_likelihood = self.prior_log_likelihood(source)
+
+        # in one dimension the jacobi trace is equivalent to the gradient
+        # since the trace is just the sum of the diagonal and the 1x1 jacobian
+        # only has one element, which is the gradient
+        model_with_jacobi_trace = jax.vmap(jax.value_and_grad(self))
 
         def body_fun(_, carry):
-            t, x_t, ll = carry
+            t, x_t, log_likelihood = carry
             t = t + dt
-            v_t, grad_v_t = model_value_and_grad(x_t, t)
-            x_t = x_t + v_t * dt
-            ll = ll - grad_v_t * dt
-            return (t, x_t, ll)
+            velocity_t, grad_velocity_t = model_with_jacobi_trace(x_t, t)
+            x_t = x_t + velocity_t * dt
+            log_likelihood = log_likelihood - grad_velocity_t * dt
+            return (t, x_t, log_likelihood)
 
-        t, x_t, ll = jax.lax.fori_loop(0, num_steps, body_fun, (t, x_t, ll))
-        return x_t, ll
+        t, x_t, log_likelihood = jax.lax.fori_loop(
+            0,
+            num_steps,
+            body_fun,
+            (t, x_t, log_likelihood),
+        )
+        return x_t, log_likelihood
 
     def prior_log_likelihood(self, x):
         return -0.5 * jnp.log(2 * jnp.pi) - 0.5 * x**2
+
+    def score_function(self, x, t):
+        # use Tweedies formula to compute the score function and
+        # rescale linearly in time, because we are interpolating between
+        # the normal noise and not the target distribution, not just adding
+        # the normal noise to the samples
+        sigma = 1 - t
+        x_denoised = self(x, t)
+        return (t * x_denoised - x) / sigma**2
 
 
 class FlowMatchingLoss(seli.opt.Loss):
@@ -143,7 +166,7 @@ model = Flow().set_rngs(42)
 loss = FlowMatchingLoss(optimal_transport=True)
 opt = seli.opt.Adam(3e-4)
 
-batch_size = 256
+batch_size = 1024
 key = jrn.PRNGKey(42)
 losses = []
 
@@ -159,54 +182,23 @@ for _ in trange(10000, desc="Training"):
     losses.append(loss_value)
 
 
-num_steps = 1024 * 8
-fig, (ax_loss, ax_samples) = plt.subplots(1, 2, figsize=(10, 5))
-
-ax_loss.plot(losses)
-ax_loss.set_yscale("log")
-
-ax_loss.set_xlim(0, len(losses))
-ax_loss.set_xlabel("Iteration")
-ax_loss.set_ylabel("log loss")
-
-ax_loss.set_title("Loss")
-sns.despine(ax=ax_loss)
-
+num_steps = 4096
 key, subkey = jrn.split(key)
 
 x = jnp.linspace(-3, 3, 128)
-y = jnp.exp(model.forward_with_log_likelihood(x, num_steps)[1])
+likelihood_model = jnp.exp(model.forward_with_log_likelihood(x, num_steps)[1])
 
-y_true = two_gaussians_likelihood(x)
+likelihood = two_gaussians_likelihood(x)
 samples = two_gaussians(subkey, 1024 * 4)
 samples_model = model.forward(jrn.normal(subkey, (1024 * 4,)), num_steps)
 
-ax_samples.hist(
-    [
-        samples,
-        samples_model,
-    ],
-    bins=32,
-    density=True,
-    label=["Data samples", "Flow samples"],
-    histtype="step",
-    color=["tab:blue", "tab:red"],
+fig = plot_1d_generative_model(
+    losses,
+    samples,
+    samples_model,
+    x,
+    likelihood,
+    likelihood_model,
 )
-
-ax_samples.plot(x, y, label="Flow density", color="tab:red")
-ax_samples.plot(x, y_true, label="True density", color="tab:blue")
-
-ax_samples.set_xlim(x.min(), x.max())
-ax_samples.set_xlabel("x")
-ax_samples.set_ylabel("density")
-ax_samples.legend(frameon=False, ncol=2)
-ax_samples.set_title("Samples")
-
-sns.despine(ax=ax_samples)
 fig.suptitle("Optimal Transport Flow Matching")
-
-plt.savefig(
-    get_plot_path("flow_matching_1d.png"),
-    dpi=256,
-    bbox_inches="tight",
-)
+fig.savefig(get_plot_path("flow_matching_ot_1d.png"))

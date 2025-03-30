@@ -21,10 +21,13 @@ import jax
 import jax.nn as jnn
 import jax.numpy as jnp
 import jax.random as jrn
-import matplotlib.pyplot as plt
-import seaborn as sns
 from tqdm import trange
-from utils import get_plot_path, two_gaussians, two_gaussians_likelihood
+from utils import (
+    get_plot_path,
+    plot_1d_generative_model,
+    two_gaussians,
+    two_gaussians_likelihood,
+)
 
 import seli
 
@@ -159,52 +162,23 @@ for _ in trange(10000, desc="Training"):
     losses.append(loss_value)
 
 
-# plot the loss, samples and densities
-fig, (ax_loss, ax_samples) = plt.subplots(1, 2, figsize=(10, 5))
-
-ax_loss.plot(losses)
-ax_loss.set_yscale("log")
-
-ax_loss.set_xlim(0, len(losses))
-ax_loss.set_xlabel("Iteration")
-ax_loss.set_ylabel("log likelihood")
-
-ax_loss.set_title("Loss")
-sns.despine(ax=ax_loss)
-
-
 x = jnp.linspace(-3, 3, 128)
-y = jnp.exp(model.log_likelihood(x))
+likelihood = two_gaussians_likelihood(x)
+likelihood_model = jnp.exp(model.log_likelihood(x))
 
-y_true = two_gaussians_likelihood(x)
 samples = two_gaussians(subkey, 2048)
 samples_model = model(jrn.normal(subkey, (2048,)))
 
-ax_samples.hist(
-    [
-        samples,
-        samples_model,
-    ],
-    bins=32,
-    density=True,
-    label=["Data samples", "Flow samples"],
-    histtype="step",
-    color=["tab:blue", "tab:red"],
+fig = plot_1d_generative_model(
+    losses,
+    samples,
+    samples_model,
+    x,
+    likelihood,
+    likelihood_model,
 )
-
-ax_samples.plot(x, y, label="Flow density", color="tab:red")
-ax_samples.plot(x, y_true, label="True density", color="tab:blue")
-
-ax_samples.set_xlim(x.min(), x.max())
-ax_samples.set_xlabel("x")
-ax_samples.set_ylabel("density")
-ax_samples.legend(frameon=False, ncol=2)
-ax_samples.set_title("Samples")
-
-sns.despine(ax=ax_samples)
 fig.suptitle("Normalizing Flow")
-
-plt.savefig(
+fig.savefig(
     get_plot_path("normalizing_flow_1d.png"),
     dpi=256,
     bbox_inches="tight",

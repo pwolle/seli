@@ -1,13 +1,15 @@
 <h1 align="center">
     Seli - Fast Neural Networks Research in Jax
 </h1>
-Minimizing the time from idea to implementation with flexible neural networks in seli.
 
 [![Python Tests](https://github.com/pwolle/seli/actions/workflows/pytest.yml/badge.svg)](https://github.com/pwolle/seli/actions/workflows/pytest.yml)
 [![PyPI version](https://img.shields.io/pypi/v/seli.svg)](https://pypi.org/project/seli/)
 [![Documentation Status](https://readthedocs.org/projects/seli/badge/?version=latest)](https://seli.readthedocs.io/en/latest/?badge=latest)
 [![Downloads](https://pepy.tech/badge/seli/month)](https://pepy.tech/project/seli)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+
+Minimizing the time from idea to implementation with flexible neural networks in seli.
 
 
 ## Features
