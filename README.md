@@ -1,14 +1,6 @@
-<div align="center">
-  <table border="0">
-    <tr>
-      <td><img src="assets/logo_red_1to1.png" alt="Seli Logo" width="100"/></td>
-      <td><span style="font-size: 72px; font-weight: bold; margin: 0; text-decoration: none; display: inline-block; vertical-align: middle;">Seli</span></td>
-    </tr>
-  </table>
-</div>
-
-# Fast Neural Networks Research in Jax
-
+<h1 align="center">
+    Seli - Fast Neural Networks Research in Jax
+</h1>
 Minimizing the time from idea to implementation with flexible neural networks in seli.
 
 [![Python Tests](https://github.com/pwolle/seli/actions/workflows/pytest.yml/badge.svg)](https://github.com/pwolle/seli/actions/workflows/pytest.yml)
