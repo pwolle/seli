@@ -1,0 +1,55 @@
+
+
+% \documentclass{article}
+% \usepackage{geometry}
+% \geometry{a4paper, margin=1in}
+% \usepackage{hyperref}
+
+\documentclass[10pt,twocolumn]{article}
+% margins
+\usepackage[top=1cm,bottom=1.5cm,left=1.3cm,right=1.3cm]{geometry}
+% columns
+\usepackage{multicol} % for adjusting column separation
+\setlength{\columnsep}{13pt} % set column separation
+% language
+\usepackage[utf8]{inputenc} % for utf-8 support
+\usepackage[english]{babel} % for English support
+% sans-serif font
+\usepackage{sfmath} % load sans-serif math font
+\renewcommand{\familydefault}{\sfdefault} % set as default sans-serif font
+% math packages
+\usepackage{amsmath} % for math like align
+\usepackage{amssymb} % for math symbols like \mathbb{R}
+\usepackage{amsthm}  % For theorem environments
+\usepackage[bb=boondox]{mathalfa}
+\usepackage{mathtools}
+% images
+\usepackage{graphicx} % for images
+% captions
+\usepackage{caption}
+%\captionsetup{format=hang}
+% paragraphs
+\usepackage{parskip}
+\setlength{\parindent}{0pt}
+% pseudocode
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{setspace}  % Add this line
+% bibliography
+\usepackage{apacite}
+\usepackage[square]{natbib}
+\bibliographystyle{apacite}
+% links
+\usepackage[hidelinks]{hyperref}
+
+\providecommand{\pandocbounded}[2]{#2}
+
+\title{$title$}
+\author{$author$}
+\date{$date$}
+
+
+\begin{document}
+\maketitle
+$body$
+\end{document}
