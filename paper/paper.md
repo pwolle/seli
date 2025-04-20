@@ -1,6 +1,6 @@
 ---
 title: "A Mathematical Overview of Generative Modellig Approaches"
-author: Paul Wollenhaupt
+author: Paul Anton Maximilian Wollenhaupt
 date: \today
 abstract: |
     Generative modeling is the task of inferring a sampling procedure for a joint probability distribution of a set of variables from a finite set of typically independent and identically distributed samples. In recent years, generative modeling has become a popular field in machine learning, with applications in various domains such as computer vision, natural language processing, and audio generation.
