@@ -364,6 +364,91 @@ Large parts of the code of this project are therefore a small python package cal
 This is in contrast to classical object oriented programming in python, where the unique identity of an object is an important detail, because mutating state of an object is often necessary. `seli` therefore implements a base `Module` class which uses defensive copying when passed to `JAX` functions to ensure that mutating state of an object does not affect the assumptions of `JAX`. Cruicially the core array datatype is still immutable and is not copied for memory efficiency.
 
 
+### Code Example
+Modules, the building blocks of `seli`, are classes that inherit from `seli.Module`. They can be annotated with a `name` attribute, which is used for serialization. A common error in machine learning code is that the parameter shape or data type is different than expected. Therefore the expected shape and data type is always passed to the `Param` class. This enables more usefull error messages for these errors.
+``` python
+class Linear(
+    seli.Module,
+    name="example:Linear",
+):
+    def __init__(self, dim: int)
+        self.dim = dim
+        self.weight = seli.net.Param(
+            init=seli.net.InitNormal("He"),
+        )
+
+    def __call__(self, x):
+        return x @ self.weight(
+            (x.shape[-1], self.dim),
+            dtype=x.dtype,
+        )
+```
+
+Models can then be initialized and used as a normal python object. The random number generator state is set for the whole model by calling `set_rngs` with a random number generator key or seed. The parameters are initialized lazily on the first call, this minimizes shape errors, when experimenting with different architectures.
+``` python
+model = Linear(10).set_rngs(42)
+y = model(jnp.ones(8))
+```
+
+Optimizers are a single class (as opposed to `optax`), which lazily initializes their parameters on the first call. Calling the optimizer returns a new version of the optimizer with the updated parameters a new version of the model and the loss value.
+``` python
+optimizer = seli.opt.Adam(1e-3)
+loss = seli.opt.MeanSquaredError()
+
+x = jax.numpy.ones(32, 8)
+y = jax.numpy.ones(32, 10)
+
+optimizer, model, loss_value = optimizer.minimize(
+    loss,
+    model,
+    y,
+    x,
+)
+```
+
+Saving models is in deep learning frameworks typically not well supported, because serializing the non-array parts of the model is non-trivial. In `seli` models can be saved using the `save` and `load` methods, which leverage the names provided in the `name` attribute of the `Module`.
+``` python
+seli.save(model, "model.npz")
+model = seli.load("model.npz")
+assert isinstance(model, Linear)
+```
+
+Training a new model is as simple as creating a model and loss class and and then calling the optimizer on the dataset.
+
+``` python
+class MLP(seli.Module):
+    def __init__(self):
+        self.layers2 = [
+            seli.net.Affine(32),
+            jnn.relu,
+            seli.net.Affine(32),
+            jnn.relu,
+            seli.net.Affine(1),
+        ]
+
+    def __call__(self, x):
+        for layer in self.layers2:
+            x = layer(x)
+
+        return x[..., 0]
+
+model = MLP().set_rngs(42)
+loss = seli.opt.MeanSquaredError()
+
+opt = seli.opt.Adam(1e-3)
+
+for i in range(1000):
+    opt, model, lval = opt.minimize(
+        loss,
+        model,
+        y_batches[i % n_batches],
+        x_batches[i % n_batches],
+    )
+```
+Here a multi layer perceptron is trained using the mean square error loss on batches of inputs `x_batches` and targets `y_batches`. A result could look like the plot in Figure \ref{fig:regression_1d}, which is taken from the example `examples/regression_1d.py`.
+
+![Regression in 1D using mean square error loss. Datapoints the true mean of the data and the 90% confidence interval are shown in blue, the model predictions are shown in orange. \label{fig:regression_1d}](plots/regression_1d.png)
+
 ### Comparison with Existing Work
 
 To the author's knowledge, there is no other project that provides an accessible overview of the mathematical and algorithmic foundations of probabilistic generative modeling. There are some overview papers for deep generative models, but none similarly focus on modern methods and mathematical details.
@@ -374,18 +459,29 @@ __PyTorch__ When calculating gradients in PyTorch `value.backward()` is used to 
 
 __JAX__: Gradient computations in JAX are very similar to math notation, as the `jax.grad` function simply takes the derivative of the function with respect to the argument. `JAX` however does not provide neural network utilities and the existing libraries built on top of it like `flax`, `haiku` or `equinox` are not focused on concise high level code.
 
-__flax.nnx__ Flax has an experimental api called `nnx` which has a conceptually very similar goal to `seli`. It is however not well documented at the time of writing and the code forces the user to use stateful objects.
+__flax.nnx__ Flax has an experimental api called `nnx` which has a conceptually very similar goal to `seli`. It is however not well documented at the time of writing and source code is harder to understand for beginners.
 
 ### Development Process
 
-A continuous integration pipeline was setup to run 174 tests on cpu hardware. Additionally the package `seli` gets published to PyPI in case the pyproject version is updated. The code quality is ensured by the `ruff` linter and the `mypy` type checker. Ruff is automatically run on every commit, disallowing the commit if the code does not pass the linter. The paper is automatically compiled from markdown to latex and then pdf using pandoc.
+A continuous integration pipeline was setup to run 174 tests on cpu hardware. Additionally the package `seli` gets published to PyPI in case the pyproject version is updated. The code quality is ensured by the `ruff` linter and the `mypy` type checker. Ruff is automatically run on every commit, disallowing the commit if the code does not pass the linter.
+
+Documentation is generated from docstrings using `sphinx` and published to `readthedocs` at [$\texttt{seli.readthedocs.io}$](https://seli.readthedocs.io).
+The paper is automatically compiled from markdown to latex and then pdf using pandoc. In total 12.3k lines of code were commited to github. for this project.
+
+The final code consists of about 9.1k lines of python code. 1.3k lines of examples 3.7k lines of library code and the same ammount of test lines. The report is 10 pages long[^1] fulfilling the the requirements of the course.
+
+[^1]: Using relatively small margins and font sizes.
+
+## Summary
+
+Modern probabilistic generative modeling methods were introduced from a mathematical perspective. Concise implementations of the discussed methods are provided, which produce plots for the results. For this the `seli` package was developed, which is a small python package that makes advanced machine learning more accessible.
 
 
 ## Acknowledgements {.unnumbered}
 
 I would like to acknowledge, that I have used AI based code generation to create drafts for the tests, which I fixed manually afterwards. Additionally Copilot style autocompletion was turned on when writing the code and paper. This sometimes provided short auto generations for boilerplate code.
 
-AI was very useful for increasing the speed of writing the boring parts of the code, was not yet able to write any significant parts of the code or paper.
+AI was very useful for increasing the speed of writing the boring parts of the code, but was not yet able to write any significant parts of the code or paper.
 
 ## References {.unnumbered}
 ::: {#refs}
