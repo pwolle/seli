@@ -1,42 +1,32 @@
-$passoptions.latex()$
-\documentclass[
-$for(babel-otherlangs)$
-  $babel-otherlangs$,
-$endfor$
-$if(babel-lang)$
-  $babel-lang$,
-$endif$
-$if(fontsize)$
-  $fontsize$,
-$endif$
-$if(papersize)$
-  $papersize$paper,
-$endif$
-$for(classoption)$
-  $classoption$$sep$,
-$endfor$
-]{$documentclass$}
-$if(beamerarticle)$
-\usepackage{beamerarticle} % needs to be loaded first
-$endif$
+\documentclass[a4paper,twocolumn,10pt]{article}
 \usepackage{xcolor}
-$if(geometry)$
-\usepackage[$for(geometry)$$geometry$$sep$,$endfor$]{geometry}
-$endif$
+\usepackage[top=1.3cm,bottom=1.7cm,left=1.4cm,right=1.4cm]{geometry}
+
 \usepackage{amsmath,amssymb}
 
 \usepackage{sfmath} % load sans-serif math font
 \renewcommand{\familydefault}{\sfdefault} % set as default sans-serif font
-$--
-$-- section numbering
-$--
-$if(numbersections)$
-\setcounter{secnumdepth}{$if(secnumdepth)$$secnumdepth$$else$5$endif$}
-$else$
-\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
-$endif$
-$fonts.latex()$
-$font-settings.latex()$
+
+\usepackage[bb=boondox]{mathalpha}
+\usepackage{mathtools}
+
+\usepackage{titlesec} % reduce space below section headers
+\titlespacing*{\section}
+  {0pt}{*2.5}{*0.8}
+\titlespacing*{\subsection}
+  {0pt}{*2.0}{*0.6}
+\titlespacing*{\subsubsection}
+  {0pt}{*1.5}{*0.5}
+
+\usepackage{parskip}
+\setlength{\parindent}{0.0em}
+
+\usepackage{multicol}
+\setlength{\columnsep}{13pt}
+
+\usepackage{caption}
+\captionsetup{format=hang}
+
 $common.latex()$
 $for(header-includes)$
 $header-includes$
@@ -45,7 +35,7 @@ $after-header-includes.latex()$
 $hypersetup.latex()$
 
 $if(title)$
-\title{$title$$if(thanks)$\thanks{$thanks$}$endif$}
+\title{\vspace{-1.5em}\bfseries $title$$if(thanks)$\thanks{$thanks$}$endif$}
 $endif$
 $if(subtitle)$
 \usepackage{etoolbox}
@@ -56,7 +46,7 @@ $if(subtitle)$
 \makeatother
 \subtitle{$subtitle$}
 $endif$
-\author{$for(author)$$author$$sep$ \and $endfor$}
+\author{$for(author)$$author$$sep$ \and $endfor$\vspace{-1em}}
 \date{$date$}
 
 \begin{document}
@@ -66,9 +56,12 @@ $endif$
 $if(title)$
 \maketitle
 $if(abstract)$
-\begin{abstract}
+\begin{center}
+\section*{\centering Abstract}
+\begin{minipage}{0.92\columnwidth}
 $abstract$
-\end{abstract}
+\end{minipage}
+\end{center}
 $endif$
 $endif$
 

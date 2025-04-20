@@ -11,6 +11,7 @@ more realistic samples and training the discriminator to become better at
 distinguishing between real and generated samples.
 """
 
+# %%
 import jax
 import jax.nn as jnn
 import jax.numpy as jnp
@@ -106,7 +107,7 @@ def train_step(
     for _ in range(5):
         key, key_generator1, key_generator2, key_data = jrn.split(key, 4)
 
-        opt_generator, generator, _ = opt_generator.minimize(
+        opt_generator, generator, generator_loss = opt_generator.minimize(
             LossGenerator(),
             generator,
             discriminator,
@@ -114,15 +115,24 @@ def train_step(
             batch_size,
         )
 
-        opt_discriminator, discriminator, _ = opt_discriminator.minimize(
-            LossDiscriminator(),
-            discriminator,
-            generator,
-            key_generator2,
-            two_gaussians(key_data, batch_size),
+        opt_discriminator, discriminator, discriminator_loss = (
+            opt_discriminator.minimize(
+                LossDiscriminator(),
+                discriminator,
+                generator,
+                key_generator2,
+                two_gaussians(key_data, batch_size),
+            )
         )
 
-    return generator, discriminator, opt_generator, opt_discriminator
+    return (
+        generator,
+        discriminator,
+        opt_generator,
+        opt_discriminator,
+        generator_loss,
+        discriminator_loss,
+    )
 
 
 # initialize the generator and the discriminator and their optimizers
@@ -135,10 +145,20 @@ opt_discriminator = seli.opt.Adam(2e-3)
 batch_size = 128
 key = jrn.PRNGKey(42)
 
+generator_losses = []
+discriminator_losses = []
+
 # train the generator and the discriminator for 10000 steps
 for _ in trange(10000 // 5, desc="Training"):
     key, subkey = jrn.split(key)
-    generator, discriminator, opt_generator, opt_discriminator = train_step(
+    (
+        generator,
+        discriminator,
+        opt_generator,
+        opt_discriminator,
+        generator_loss,
+        discriminator_loss,
+    ) = train_step(
         generator,
         discriminator,
         subkey,
@@ -147,11 +167,25 @@ for _ in trange(10000 // 5, desc="Training"):
         opt_discriminator,
     )
 
+    generator_losses.append(generator_loss)
+    discriminator_losses.append(discriminator_loss)
 
-# plot the generated samples and the true data
-fig, ax = plt.subplots(figsize=(4, 4))
 
-ax.hist(
+# %%
+
+fig, (ax_loss, ax_samples) = plt.subplots(1, 2, figsize=(8, 4))
+
+ax_loss.plot(generator_losses, label="Generator", color="tab:red")
+ax_loss.plot(discriminator_losses, label="Discriminator", color="tab:blue")
+ax_loss.set_xlabel("Iteration")
+ax_loss.set_ylabel("Loss")
+ax_loss.legend(frameon=False)
+
+ax_loss.set_xlim(-50, len(generator_losses))
+sns.despine(ax=ax_loss)
+
+
+ax_samples.hist(
     [
         two_gaussians(key, 1024 * 32),
         generator.sample(key, 1024 * 32),
@@ -162,14 +196,11 @@ ax.hist(
     histtype="step",
     color=["tab:blue", "tab:red"],
 )
-ax.set_xlim(-3, 3)
-ax.legend(frameon=False, ncol=2)
+ax_samples.set_xlim(-3, 3)
+ax_samples.legend(frameon=False, ncol=2)
+sns.despine(ax=ax_samples)
 
-ax.set_title("Generative Adversarial Network")
-ax.set_xlabel("x")
-ax.set_ylabel("density")
-
-sns.despine(ax=ax)
+fig.suptitle("Generative Adversarial Network")
 fig.savefig(
     get_plot_path("generative_adversarial_net_1d.png"),
     dpi=256,
