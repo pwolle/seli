@@ -2,14 +2,16 @@
     Seli - Fast Neural Networks Research in Jax
 </h1>
 
-[![Python Tests](https://github.com/pwolle/seli/actions/workflows/pytest.yml/badge.svg)](https://github.com/pwolle/seli/actions/workflows/pytest.yml)
-[![PyPI version](https://img.shields.io/pypi/v/seli.svg)](https://pypi.org/project/seli/)
-[![Documentation Status](https://readthedocs.org/projects/seli/badge/?version=latest)](https://seli.readthedocs.io/en/latest/?badge=latest)
-[![Downloads](https://pepy.tech/badge/seli/month)](https://pepy.tech/project/seli)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<p align="center">
+    <a href="https://github.com/pwolle/seli/actions/workflows/pytest.yml"><img src="https://github.com/pwolle/seli/actions/workflows/pytest.yml/badge.svg" alt="Python Tests"></a>
+    <a href="https://pypi.org/project/seli/"><img src="https://img.shields.io/pypi/v/seli.svg" alt="PyPI version"></a>
+    <a href="https://seli.readthedocs.io/en/latest/?badge=latest"><img src="https://readthedocs.org/projects/seli/badge/?version=latest" alt="Documentation Status"></a>
+    <a href="https://pepy.tech/project/seli"><img src="https://pepy.tech/badge/seli/month" alt="Downloads"></a>
+    <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License"></a>
+</p>
 
 
-Minimizing the time from idea to implementation with flexible neural networks in seli.
+Minimizing the time from idea to implementation with flexible neural networks in seli. Less boilerplate, more utilities for quick iteration speed.
 
 
 ## Features
