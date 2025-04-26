@@ -148,3 +148,4 @@ docs/api
 *.npz
 
 tmp/
+*.pdf
